@@ -1,0 +1,8 @@
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.ow2.asm', name: 'asm', version: '7.2'
+
+}
