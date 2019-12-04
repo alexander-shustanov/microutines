@@ -7,7 +7,13 @@ public class Context {
         this.dispatcher = dispatcher;
     }
 
+    @Suspend
     public void delay(Suspendable suspendable, int milliseconds) {
-        Magic.getContext(suspendable).dispatcher.scheduleWithDelay(suspendable, milliseconds);
+        Continuation continuation = Magic.getContinuation(suspendable);
+        Magic.getContext(suspendable).dispatcher.scheduleWithDelay(continuation, milliseconds);
+    }
+
+    public void launch(Suspendable suspendable) {
+
     }
 }

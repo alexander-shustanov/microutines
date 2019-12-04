@@ -1,6 +1,6 @@
-import joroutine.Sequence;
-import joroutine.Suspendable;
-import junit.framework.TestCase;
+package joroutine;
+
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -8,14 +8,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SequenceTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+
+public class YieldTest {
+    @Test
     public void testIntSequence() {
-        Sequence<Integer> sequence = new Sequence<Integer>(new Suspendable<Sequence.SequenceContext<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<Integer>(new Suspendable<SequenceScope<Integer>>() {
             @Override
-            public void run(Sequence.SequenceContext<Integer> context) {
-                context.yield(10);
-                context.yield(20);
-                context.yield(30);
+            public void run(SequenceScope<Integer> scope) {
+                scope.yield(10);
+                scope.yield(20);
+                scope.yield(30);
             }
         });
 
@@ -29,14 +34,15 @@ public class SequenceTest extends TestCase {
         assertEquals(30, (int) list.get(2));
     }
 
+    @Test
     public void testOuterData() {
         AtomicInteger next = new AtomicInteger(100);
         AtomicBoolean end = new AtomicBoolean(false);
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<Sequence.SequenceContext<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
             @Override
-            public void run(Sequence.SequenceContext<Integer> context) {
+            public void run(SequenceScope<Integer> scope) {
                 while (!end.get()) {
-                    context.yield(next.get());
+                    scope.yield(next.get());
                 }
             }
         });
@@ -56,25 +62,26 @@ public class SequenceTest extends TestCase {
         assertFalse(iterator.hasNext());
     }
 
+    @Test
     public void testNested() {
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<Sequence.SequenceContext<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
             @Override
-            public void run(Sequence.SequenceContext<Integer> context) {
-                Sequence<Integer> nested = new Sequence<>(new Suspendable<Sequence.SequenceContext<Integer>>() {
+            public void run(SequenceScope<Integer> scope) {
+                Sequence<Integer> nested = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
                     @Override
-                    public void run(Sequence.SequenceContext<Integer> context) {
-                        context.yield(100);
-                        context.yield(200);
+                    public void run(SequenceScope<Integer> scope) {
+                        scope.yield(100);
+                        scope.yield(200);
                     }
                 });
 
-                context.yield(0);
+                scope.yield(0);
 
                 for (Integer integer : nested) {
-                    context.yield(integer);
+                    scope.yield(integer);
                 }
 
-                context.yield(300);
+                scope.yield(300);
             }
         });
 

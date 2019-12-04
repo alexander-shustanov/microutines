@@ -9,14 +9,25 @@ public class Sequence<T> implements Iterable<T> {
     Object next = STOP;
     Continuation nextStep;
     Iterator<T> iterator;
+    Iterator<T> nextIterator;
 
-    public Sequence(Suspendable<SequenceContext<T>> suspendable) {
-        this.nextStep = Magic.create(suspendable, new SequenceContext(this));
+    public Sequence(Suspendable<SequenceScope<T>> suspendable) {
+        this.nextStep = Magic.create(suspendable, new SequenceScope<>(this));
         this.iterator = new Iterator<T>() {
             @Override
             public boolean hasNext() {
                 if (next == STOP) {
+                    if (nextIterator != null) {
+                        if (nextIterator.hasNext()) {
+                            next = nextIterator.next();
+                            return true;
+                        } else {
+                            nextIterator = null;
+                        }
+                    }
                     nextStep.run();
+                    if (nextIterator != null)
+                        return hasNext();
                 }
                 return next != STOP;
             }
@@ -42,27 +53,6 @@ public class Sequence<T> implements Iterable<T> {
         return iterator;
     }
 
-    public static class SequenceContext<T> extends Context {
-        private Sequence<T> sequence;
-
-        public SequenceContext(Sequence<T> sequence) {
-            super(Dispatcher.UNSUPPORTED);
-            this.sequence = sequence;
-        }
-
-        @Suspend
-        public void yield(T t) {
-            sequence.next = t;
-        }
-
-        @Suspend
-        public Object yieldAll(Sequence<T> another) {
-            if (another.iterator.hasNext()) {
-                sequence.next = another.iterator.next();
-                return Magic.SUSPEND;
-            }
-            return null;
-        }
-    }
 
 }
+

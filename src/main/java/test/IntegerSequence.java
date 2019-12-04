@@ -1,32 +1,33 @@
 package test;
 
 import joroutine.Sequence;
+import joroutine.SequenceScope;
 import joroutine.Suspendable;
 
-public class IntegerSequence extends Suspendable<Sequence.SequenceContext<Integer>> {
+public class IntegerSequence extends Suspendable<SequenceScope<Integer>> {
 
     @Override
-    public void run(Sequence.SequenceContext<Integer> context) {
+    public void run(SequenceScope<Integer> scope) {
         int i = 0;
 
-        Sequence<Integer> nested = new Sequence<>(new Suspendable<Sequence.SequenceContext<Integer>>() {
+        Sequence<Integer> nested = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
             @Override
-            public void run(Sequence.SequenceContext<Integer> context) {
-                context.yield(11);
-                context.yield(50);
+            public void run(SequenceScope<Integer> scope) {
+                scope.yield(11);
+                scope.yield(50);
             }
         });
 
         for (Integer integer : nested) {
-            context.yield(integer * 2);
-            context.yield(integer * 4);
+            scope.yield(integer * 2);
+            scope.yield(integer * 4);
         }
 
         for (; i < 100; i++) {
-            context.yield(i += 10);
-            context.yield(i += 10);
-            context.yield(i += 10);
+            scope.yield(i += 10);
+            scope.yield(i += 10);
+            scope.yield(i += 10);
         }
-        context.yield(i += 10);
+        scope.yield(i += 10);
     }
 }

@@ -6,9 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Always suspends after execution.
+ * joroutine.Continuation#SUSPEND
+ * joroutine.Continuation#END
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface Suspend {
+public @interface FlowControl {
 }

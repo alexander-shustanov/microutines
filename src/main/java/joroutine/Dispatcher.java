@@ -1,13 +1,15 @@
 package joroutine;
 
 public interface Dispatcher {
-    Dispatcher UNSUPPORTED = suspendable -> {
+    Dispatcher UNSUPPORTED = continuation -> {
         throw new RuntimeException("Unable to schedule on context");
     };
 
-    void schedule(Suspendable suspendable);
+    Dispatcher IMMEDIATE = Continuation::run;
 
-    default void scheduleWithDelay(Suspendable suspendable, int milliseconds) {
+    void schedule(Continuation continuation);
+
+    default void scheduleWithDelay(Continuation continuation, int milliseconds) {
 
     }
 }
