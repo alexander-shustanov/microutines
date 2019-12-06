@@ -25,7 +25,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         myClassJvmName = currentClass.getName().replace('.', '/');
 
-        this.numLabels = methodInfo.getCount();
+        this.numLabels = methodInfo.getLabelCount();
         this.labelVarIndex = methodInfo.getMaxLocals();
 
         thisVarOrder = methodInfo.getVariables().stream().filter(localVariable -> localVariable.name.equals("this")).findFirst().orElseThrow(RuntimeException::new).index;
@@ -148,6 +148,9 @@ public class SuspendableMethodConverter extends MethodVisitor {
     @Override
     public void visitInsn(int opcode) {
         if (opcode == Opcodes.RETURN) {
+            super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+            super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
             doReturn();
         } else {
             super.visitInsn(opcode);

@@ -1,13 +1,18 @@
 package test;
 
-import joroutine.Sequence;
+import joroutine.BlockingContext;
 
 public class SequenceTest {
+    @SuppressWarnings("rawtypes")
     public static void main(String[] args) {
-        Sequence<Integer> sequence = new Sequence<>(new IntegerSequence());
 
-        for (Integer integer : sequence) {
-            System.out.println(integer);
-        }
+        long start = System.currentTimeMillis();
+
+        System.out.println("Start");
+        BlockingContext.INSTANCE.launch(new Coroutine(1000000));
+
+        System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
+
+        System.exit(0);
     }
 }

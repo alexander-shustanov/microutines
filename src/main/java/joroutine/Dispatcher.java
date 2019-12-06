@@ -1,15 +1,43 @@
 package joroutine;
 
-public interface Dispatcher {
-    Dispatcher UNSUPPORTED = continuation -> {
-        throw new RuntimeException("Unable to schedule on context");
-    };
+import joroutine.eventloop.Event;
+import joroutine.eventloop.EventLoop;
 
-    Dispatcher IMMEDIATE = Continuation::run;
+@SuppressWarnings("rawtypes")
+public abstract class Dispatcher {
+    private final EventLoop eventLoop = new EventLoop();
 
-    void schedule(Continuation continuation);
-
-    default void scheduleWithDelay(Continuation continuation, int milliseconds) {
-
+    public Dispatcher(String name) {
+        Thread myScheduleThread = new Thread(() -> {
+            while (true) {
+                Event event = eventLoop.poll();
+                dispatch(event.context, event.continuation);
+            }
+        });
+        myScheduleThread.setName("Scheduler: " + name);
+        myScheduleThread.setDaemon(true);
+        myScheduleThread.start();
     }
+
+    public void schedule(Context context, Continuation continuation) {
+        eventLoop.push(context, continuation);
+    }
+
+    public void schedule(Context context, Continuation continuation, long delay) {
+        eventLoop.push(context, continuation, delay);
+    }
+
+    private void dispatch(Context context, Continuation continuation) {
+        doDispatch(() -> {
+            Context saved = Context.getCurrent();
+            context.set();
+            try {
+                return continuation.run();
+            } finally {
+                saved.set();
+            }
+        });
+    }
+
+    protected abstract void doDispatch(Continuation continuation);
 }

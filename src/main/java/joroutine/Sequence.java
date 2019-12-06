@@ -12,7 +12,7 @@ public class Sequence<T> implements Iterable<T> {
     Iterator<T> nextIterator;
 
     public Sequence(Suspendable<SequenceScope<T>> suspendable) {
-        this.nextStep = Magic.create(suspendable, new SequenceScope<>(this));
+        this.nextStep = Magic.createContinuation(suspendable, new SequenceScope<>(this));
         this.iterator = new Iterator<T>() {
             @Override
             public boolean hasNext() {

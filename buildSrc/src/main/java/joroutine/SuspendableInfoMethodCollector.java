@@ -71,7 +71,7 @@ public class SuspendableInfoMethodCollector extends MethodVisitor {
         this.maxLocals = maxLocals;
     }
 
-    public int getCount() {
+    public int getLabelCount() {
         return count;
     }
 

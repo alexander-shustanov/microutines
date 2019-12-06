@@ -25,7 +25,7 @@ public class TestSequenceErrors {
         new Sequence<Integer>(new Suspendable<SequenceScope<Integer>>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.async(this);
+                scope.launch(Context.EMPTY, this);
             }
         }).forEach(integer -> {
         });

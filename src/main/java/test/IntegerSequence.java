@@ -4,7 +4,7 @@ import joroutine.Sequence;
 import joroutine.SequenceScope;
 import joroutine.Suspendable;
 
-public class IntegerSequence extends Suspendable<SequenceScope<Integer>> {
+public class IntegerSequence{}/* extends Suspendable<SequenceScope<Integer>> {
 
     @Override
     public void run(SequenceScope<Integer> scope) {
@@ -30,4 +30,4 @@ public class IntegerSequence extends Suspendable<SequenceScope<Integer>> {
         }
         scope.yield(i += 10);
     }
-}
+}*/

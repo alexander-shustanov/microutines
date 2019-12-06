@@ -5,16 +5,25 @@ import java.lang.reflect.Field;
 public class Magic {
     public static final String SCOPE = "scope$S";
 
-    static <C extends Scope, R> Continuation<R> create(Suspendable<C> suspendable, C context) {
+    static <C extends Scope, R> Continuation<R> createContinuation(Suspendable<C> suspendable, C scope) {
         try {
             Field contextField = suspendable.getClass().getDeclaredField(SCOPE);
             contextField.setAccessible(true);
-            contextField.set(suspendable, context);
+
+            if (contextField.get(suspendable) != null)
+                throw new IllegalArgumentException("Continuation already created");
+
+            contextField.set(suspendable, scope);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        return getContinuation(suspendable);
+        Continuation<R> continuation = getContinuation(suspendable);
+
+        if (scope instanceof ScopeImpl) {
+            ((ScopeImpl) scope).continuation = continuation;
+        }
+        return continuation;
     }
 
 
@@ -22,7 +31,7 @@ public class Magic {
         return ((Continuation<R>) suspendable);
     }
 
-    public static Context getContext(Suspendable suspendable) {
+    public static Context getScope(Suspendable suspendable) {
         try {
             Field contextField = suspendable.getClass().getDeclaredField(SCOPE);
             return (Context) contextField.get(suspendable);

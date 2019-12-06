@@ -18,7 +18,7 @@ public class SequenceScope<T> implements Scope {
     }
 
     @Override
-    public void async(Suspendable suspendable) {
+    public void launch(Context context, Suspendable suspendable) {
         throw new RuntimeException("Async is unsupported for sequences");
     }
 }
