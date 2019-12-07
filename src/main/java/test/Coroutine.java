@@ -1,16 +1,15 @@
 package test;
 
-import joroutine.Context;
-import joroutine.Scope;
-import joroutine.Suspendable;
+import joroutine.CoroutineContext;
+import joroutine.CoroutineScope;
+import joroutine.CoroutineSuspendable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Coroutine extends Suspendable {
+public class Coroutine extends CoroutineSuspendable {
     private int numCoroutines;
     private CountDownLatch latch;
-
 
     public Coroutine(int numCoroutines) {
         this.numCoroutines = numCoroutines;
@@ -18,7 +17,7 @@ public class Coroutine extends Suspendable {
     }
 
     @Override
-    public void run(Scope scope) {
+    public void run(CoroutineScope scope) {
         long start = System.currentTimeMillis();
 
         System.out.println("Hello");
@@ -28,9 +27,9 @@ public class Coroutine extends Suspendable {
         AtomicInteger atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < numCoroutines; i++) {
-            scope.launch(Context.EMPTY, new Suspendable() {
+            scope.launch(CoroutineContext.EMPTY, new CoroutineSuspendable() {
                 @Override
-                public void run(Scope scope) {
+                public void run(CoroutineScope scope) {
                     scope.delay(500);
                     atomicInteger.incrementAndGet();
                     latch.countDown();
@@ -38,19 +37,17 @@ public class Coroutine extends Suspendable {
             });
         }
 
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        scope.await(latch);
 
-        System.out.println(atomicInteger.get());
+        scope.delay(3000);
+
+        System.out.println("Atomic int: " + atomicInteger.get());
 
         System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
 
-        scope.launchAwait(Context.EMPTY, new Suspendable() {
+        scope.launchAwait(CoroutineContext.EMPTY, new CoroutineSuspendable() {
             @Override
-            public void run(Scope scope) {
+            public void run(CoroutineScope scope) {
                 scope.delay(1000);
                 System.out.println("World");
             }

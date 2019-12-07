@@ -19,9 +19,9 @@ public class TestCoroutine {
                 CountDownLatch latch = new CountDownLatch(million);
 
                 for (int i = 0; i < million; i++) {
-                    Context.EMPTY.launch(new Suspendable() {
+                    CoroutineContext.EMPTY.launch(new CoroutineSuspendable() {
                         @Override
-                        public void run(Scope scope) {
+                        public void run(CoroutineScope scope) {
                             scope.delay(500);
 
                             counter.incrementAndGet();

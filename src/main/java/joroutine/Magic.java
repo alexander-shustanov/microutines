@@ -26,15 +26,18 @@ public class Magic {
         return continuation;
     }
 
-
     public static <R, C extends Scope> Continuation<R> getContinuation(Suspendable<C> suspendable) {
+        if (getScope(suspendable) == null)
+            throw new RuntimeException("No continuation created for specified suspendable");
+        //noinspection unchecked
         return ((Continuation<R>) suspendable);
     }
 
-    public static Context getScope(Suspendable suspendable) {
+    public static Scope getScope(Suspendable suspendable) {
         try {
             Field contextField = suspendable.getClass().getDeclaredField(SCOPE);
-            return (Context) contextField.get(suspendable);
+            contextField.setAccessible(true);
+            return (Scope) contextField.get(suspendable);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

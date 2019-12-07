@@ -10,6 +10,7 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -71,7 +72,7 @@ public class ProcessSuspendableTask extends DefaultTask {
 
         Class<?> suspendable = classLoader.loadClass(SUSPENDABLE);
 
-        if (!suspendable.isAssignableFrom(currentClass) || currentClass.equals(suspendable)) {
+        if (!suspendable.isAssignableFrom(currentClass) || Modifier.isAbstract(currentClass.getModifiers())) {
             return;
         }
 

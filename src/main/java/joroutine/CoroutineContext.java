@@ -1,10 +1,10 @@
 package joroutine;
 
 @SuppressWarnings("rawtypes")
-public class Context {
-    private static final ThreadLocal<Context> contexts = new ThreadLocal<>();
+public class CoroutineContext {
+    private static final ThreadLocal<CoroutineContext> contexts = new ThreadLocal<>();
 
-    public static final Context EMPTY = new Context(Dispatchers.DEFAULT) {
+    public static final CoroutineContext EMPTY = new CoroutineContext(Dispatchers.DEFAULT) {
         @Override
         void set() {
             contexts.set(null);
@@ -13,13 +13,13 @@ public class Context {
 
     protected final Dispatcher dispatcher;
 
-    public Context(Dispatcher dispatcher) {
+    public CoroutineContext(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
     }
 
-    public void launch(Suspendable suspendable) {
+    public void launch(CoroutineSuspendable suspendable) {
         Continuation continuation = Magic.createContinuation(suspendable, new ScopeImpl());
-        dispatcher.schedule(this, continuation);
+        dispatcher.dispatch(this, continuation);
     }
 
     public void launch(Suspendable suspendable, Runnable completion) {
@@ -27,7 +27,7 @@ public class Context {
         Continuation continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation, completion);
         scope.continuation = wrappedContinuation;
-        dispatcher.schedule(this, wrappedContinuation);
+        dispatcher.dispatch(this, wrappedContinuation);
     }
 
     void set() {
@@ -38,12 +38,10 @@ public class Context {
         return dispatcher;
     }
 
-    public static Context getCurrent() {
-        Context context = contexts.get();
+    public static CoroutineContext getCurrent() {
+        CoroutineContext context = contexts.get();
         if (context == null)
             return EMPTY;
         return context;
     }
-
-
 }

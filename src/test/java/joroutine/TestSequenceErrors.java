@@ -18,16 +18,4 @@ public class TestSequenceErrors {
             System.out.println(aVoid);
         }
     }
-
-
-    @Test(expected = RuntimeException.class)
-    public void testAsyncNotSupported() {
-        new Sequence<Integer>(new Suspendable<SequenceScope<Integer>>() {
-            @Override
-            public void run(SequenceScope<Integer> scope) {
-                scope.launch(Context.EMPTY, this);
-            }
-        }).forEach(integer -> {
-        });
-    }
 }

@@ -1,42 +1,52 @@
 package joroutine;
 
-import static joroutine.Context.getCurrent;
+import joroutine.eventloop.Delay;
+
+import java.util.concurrent.CountDownLatch;
+
+import static joroutine.CoroutineContext.getCurrent;
 
 @SuppressWarnings("rawtypes")
-class ScopeImpl implements Scope {
+class ScopeImpl implements CoroutineScope {
     Continuation continuation;
-
 
     @Override
     @Suspend
     public void delay(long millis) {
-        getCurrent().getDispatcher().schedule(getCurrent(), continuation, millis);
+        Delay.INSTANCE.schedule(getCurrent(), continuation, millis);
     }
 
     @Override
     @Suspend
     public void await(Deferred deferred) {
-//        launch(getCurrent(), createCheckSuspendable(deferred));
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void await(CountDownLatch latch) {
+        CoroutineContext context = getCurrent();
+        context.launch(createLatchChecker(latch, context));
+    }
+
+    private CoroutineSuspendable createLatchChecker(CountDownLatch latch, CoroutineContext context) {
+        return new CoroutineSuspendable() {
+            @Override
+            public void run(CoroutineScope scope) {
+                if (latch.getCount() == 0) {
+                    context.getDispatcher().dispatch(context, continuation);
+                } else {
+                    context.launch(createLatchChecker(latch, context));
+                }
+            }
+        };
     }
 
     @Suspend
     @Override
-    public void launchAwait(Context context, Suspendable suspendable) {
-        Context currentContext = getCurrent();
+    public void launchAwait(CoroutineContext context, CoroutineSuspendable suspendable) {
+        CoroutineContext currentContext = getCurrent();
         context.launch(suspendable, () -> {
-            currentContext.getDispatcher().schedule(currentContext, continuation);
+            currentContext.getDispatcher().dispatch(currentContext, continuation);
         });
     }
-
-//    private Suspendable createCheckSuspendable(Deferred deferred) {
-//        return new Suspendable() {
-//            @Override
-//            public void run(Scope scope) {
-//                if (deferred.isDone())
-//                    getCurrent().getDispatcher().schedule(getCurrent(), continuation);
-//                else
-//                    launch(getCurrent(), createCheckSuspendable(deferred));
-//            }
-//        };
-//    }
 }

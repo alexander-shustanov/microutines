@@ -1,7 +1,7 @@
 package joroutine.eventloop;
 
-import joroutine.Context;
 import joroutine.Continuation;
+import joroutine.CoroutineContext;
 
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -9,9 +9,23 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.locks.LockSupport;
 
 @SuppressWarnings("rawtypes")
-public class EventLoop {
+public class Delay {
     private final CopyOnWriteArraySet<Thread> parkedThreads = new CopyOnWriteArraySet<>();
     private final PriorityBlockingQueue<Event> events = new PriorityBlockingQueue<>(50, Comparator.comparingLong(o -> o.dispatchAt));
+
+    public static final Delay INSTANCE = new Delay();
+
+    private Delay() {
+        Thread myScheduleThread = new Thread(() -> {
+            while (true) {
+                Event event = poll();
+                event.context.getDispatcher().dispatch(event.context, event.continuation);
+            }
+        });
+        myScheduleThread.setName("Delay");
+        myScheduleThread.setDaemon(true);
+        myScheduleThread.start();
+    }
 
     public Event poll() {
         while (true) {
@@ -38,11 +52,7 @@ public class EventLoop {
         }
     }
 
-    public void push(Context context, Continuation continuation) {
-        pushMessage(new Event(continuation, context));
-    }
-
-    public void push(Context context, Continuation continuation, long delay) {
+    public void schedule(CoroutineContext context, Continuation continuation, long delay) {
         pushMessage(new Event(continuation, System.currentTimeMillis() + delay, context));
     }
 

@@ -16,9 +16,4 @@ public class SequenceScope<T> implements Scope {
     public void yieldAll(Sequence<T> another) {
         sequence.nextIterator = another.iterator();
     }
-
-    @Override
-    public void launch(Context context, Suspendable suspendable) {
-        throw new RuntimeException("Async is unsupported for sequences");
-    }
 }

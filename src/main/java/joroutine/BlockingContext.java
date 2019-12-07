@@ -2,7 +2,7 @@ package joroutine;
 
 import java.util.concurrent.CountDownLatch;
 
-public class BlockingContext extends Context {
+public class BlockingContext extends CoroutineContext {
     public static final BlockingContext INSTANCE = new BlockingContext();
 
     private BlockingContext() {
@@ -11,13 +11,13 @@ public class BlockingContext extends Context {
 
     @SuppressWarnings({"rawtypes"})
     @Override
-    public void launch(Suspendable suspendable) {
-        if (Context.getCurrent() != EMPTY) {
+    public void launch(CoroutineSuspendable suspendable) {
+        if (CoroutineContext.getCurrent() == this) {
             throw new RuntimeException("Blocking context inside blocking context");
         }
 
         CountDownLatch latch = new CountDownLatch(1);
-        super.launch(suspendable, latch::countDown);
+        CoroutineContext.EMPTY.launch(suspendable, latch::countDown);
 
         try {
             latch.await();
