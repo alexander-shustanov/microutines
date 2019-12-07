@@ -14,7 +14,7 @@ public class SuspendableConverter {
     private ClassWriter classWriter;
     private ClassReader classReader;
 
-    private Class currentClass;
+    private Class<?> currentClass;
 
     public SuspendableConverter(ClassLoader classLoader, ClassWriter classWriter, ClassReader classReader, Class currentClass) {
         this.classLoader = classLoader;
@@ -58,7 +58,7 @@ public class SuspendableConverter {
                         return new MethodVisitor(api) { // delete bridge method
                         };
 
-                    return new SuspendableMethodConverter(classLoader, currentClass, access, "()Ljava/lang/Object;", super.visitMethod(access, name, "()Ljava/lang/Object;", null, exceptions), runMethodInfo);
+                    return new SuspendableMethodConverter(classLoader, currentClass, super.visitMethod(access, name, "()Ljava/lang/Object;", null, exceptions), runMethodInfo);
                 }
 
                 return super.visitMethod(access, name, descriptor, signature, exceptions);
@@ -75,7 +75,7 @@ public class SuspendableConverter {
                 }
 
                 super.visitField(Opcodes.ACC_PRIVATE, "label$S$S", "I", null, null);
-                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "maxLabel$S$S", "I", null, runMethodInfo.getLabelCount() + 1);
+                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, "maxLabel$S$S", "I", null, runMethodInfo.getLabelCount() + 1);
 
                 super.visitEnd();
             }

@@ -21,13 +21,11 @@ public class Coroutine extends Suspendable {
     public void run(Scope scope) {
         long start = System.currentTimeMillis();
 
-
         System.out.println("Hello");
 
         scope.delay(1000);
 
         AtomicInteger atomicInteger = new AtomicInteger(0);
-
 
         for (int i = 0; i < numCoroutines; i++) {
             scope.launch(Context.EMPTY, new Suspendable() {
@@ -50,12 +48,12 @@ public class Coroutine extends Suspendable {
 
         System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
 
-//                scope.launchAwait(Context.EMPTY, new Suspendable() {
-//                    @Override
-//                    public void run(Scope scope) {
-//                        scope.delay(1000);
-//                        System.out.println("World");
-//                    }
-//                });
+        scope.launchAwait(Context.EMPTY, new Suspendable() {
+            @Override
+            public void run(Scope scope) {
+                scope.delay(1000);
+                System.out.println("World");
+            }
+        });
     }
 }

@@ -15,15 +15,13 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private final int thisVarOrder;
     private final List<SuspendInfo> suspendInfos;
 
-    private Class currentClass;
     private SuspendableInfoMethodCollector methodInfo;
 
     int suspensionNumber = 0;
 
-    public SuspendableMethodConverter(ClassLoader classLoader, Class currentClass, int access, String descriptor, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
-        super(Opcodes.ASM7, /*access, descriptor, */methodVisitor);
+    public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
+        super(Opcodes.ASM7, methodVisitor);
         this.classLoader = classLoader;
-        this.currentClass = currentClass;
         this.methodInfo = methodInfo;
 
         myClassJvmName = currentClass.getName().replace('.', '/');
@@ -164,7 +162,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
     @Override
     public void visitMaxs(int maxStack, int maxLocals) {
-//        super.visitLocalVariable("label", "I", null, new Label(), new Label(), labelVarIndex);
-        super.visitMaxs(maxStack, maxLocals + 1);
+        super.visitLocalVariable("label", "I", null, new Label(), new Label(), labelVarIndex);
+        super.visitMaxs(maxStack, maxLocals);
     }
 }
