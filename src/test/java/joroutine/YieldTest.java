@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -91,5 +94,25 @@ public class YieldTest {
         assertEquals(100, (int) iterator.next());
         assertEquals(200, (int) iterator.next());
         assertEquals(300, (int) iterator.next());
+    }
+
+    @Test
+    public void stream() {
+        Sequence<Integer> integers = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+            @Override
+            public void run(SequenceScope<Integer> scope) {
+                scope.yield(100);
+                scope.yield(200);
+                scope.yield(300);
+            }
+        });
+
+        List<Integer> list = StreamSupport.stream(integers.spliterator(), false)
+                .map(t -> t * 2)
+                .collect(Collectors.toList());
+
+        assertEquals(200, ((int) list.get(0)));
+        assertEquals(400, ((int) list.get(2)));
+        assertEquals(600, ((int) list.get(3)));
     }
 }
