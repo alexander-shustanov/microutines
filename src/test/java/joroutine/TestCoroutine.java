@@ -13,9 +13,9 @@ public class TestCoroutine {
 
         AtomicInteger counter = new AtomicInteger(0);
 
-        BlockingContext.INSTANCE.launch(new Suspendable() {
+        BlockingContext.INSTANCE.launch(new CoroutineSuspendable() {
             @Override
-            public void run(Scope scope) {
+            public void run(CoroutineScope scope) {
                 CountDownLatch latch = new CountDownLatch(million);
 
                 for (int i = 0; i < million; i++) {
@@ -30,11 +30,7 @@ public class TestCoroutine {
                     });
                 }
 
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                scope.await(latch);
             }
         });
 
