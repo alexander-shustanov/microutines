@@ -4,6 +4,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.List;
+
 public class SuspendableMethodConverter extends MethodVisitor {
     private final ClassLoader classLoader;
     private final int numLabels;
@@ -11,24 +13,26 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private final String myClassJvmName;
     private final int labelVarIndex;
     private final int thisVarOrder;
+    private final List<SuspendInfo> suspendInfos;
 
     private Class currentClass;
     private SuspendableInfoMethodCollector methodInfo;
 
     int yieldN = 0;
 
-    public SuspendableMethodConverter(MethodVisitor methodVisitor, ClassLoader classLoader, Class currentClass, SuspendableInfoMethodCollector methodInfo) {
-        super(Opcodes.ASM7, methodVisitor);
+    public SuspendableMethodConverter(ClassLoader classLoader, Class currentClass, int access, String descriptor, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
+        super(Opcodes.ASM7, /*access, descriptor, */methodVisitor);
         this.classLoader = classLoader;
         this.currentClass = currentClass;
         this.methodInfo = methodInfo;
 
         myClassJvmName = currentClass.getName().replace('.', '/');
 
+        suspendInfos = methodInfo.getSuspendInfos();
         this.numLabels = methodInfo.getLabelCount();
         this.labelVarIndex = methodInfo.getMaxLocals();
 
-        thisVarOrder = methodInfo.getVariables().stream().filter(localVariable -> localVariable.name.equals("this")).findFirst().orElseThrow(RuntimeException::new).index;
+        thisVarOrder = 0;
 
 
         labels = new Label[numLabels];
@@ -92,12 +96,14 @@ public class SuspendableMethodConverter extends MethodVisitor {
     }
 
     private void restoreFrame() {
-        methodInfo.getVariables().stream().filter(localVariable -> !localVariable.name.equals("this")).forEach(localVariable -> {
+        if (suspendInfos.isEmpty())
+            return;
+        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(yieldN).getMappings()) {
             super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
-            super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, localVariable.name + "$S", localVariable.descriptor);
+            super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
 
             int opcode = Opcodes.ASTORE;
-            switch (localVariable.descriptor) {
+            switch (mapping.field.fieldDescriptor) {
                 case "I":
                 case "Z":
                 case "S":
@@ -114,15 +120,17 @@ public class SuspendableMethodConverter extends MethodVisitor {
                     opcode = Opcodes.DSTORE;
                     break;
             }
-
-            super.visitVarInsn(opcode, localVariable.index);
-        });
+            super.visitVarInsn(opcode, mapping.varIndex);
+        }
     }
 
     private void saveFrame() {
-        methodInfo.getVariables().stream().filter(localVariable -> !localVariable.name.equals("this")).forEach(localVariable -> {
+        if (suspendInfos.isEmpty())
+            return;
+
+        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(yieldN).getMappings()) {
             int opcode = Opcodes.ALOAD;
-            switch (localVariable.descriptor) {
+            switch (mapping.field.fieldDescriptor) {
                 case "I":
                 case "Z":
                 case "S":
@@ -140,9 +148,9 @@ public class SuspendableMethodConverter extends MethodVisitor {
                     break;
             }
             super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
-            super.visitVarInsn(opcode, localVariable.index);
-            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, localVariable.name + "$S", localVariable.descriptor);
-        });
+            super.visitVarInsn(opcode, mapping.varIndex);
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
+        }
     }
 
     @Override
@@ -161,10 +169,5 @@ public class SuspendableMethodConverter extends MethodVisitor {
     public void visitMaxs(int maxStack, int maxLocals) {
 //        super.visitLocalVariable("label", "I", null, new Label(), new Label(), labelVarIndex);
         super.visitMaxs(maxStack, maxLocals + 1);
-    }
-
-    @Override
-    public void visitEnd() {
-        super.visitEnd();
     }
 }

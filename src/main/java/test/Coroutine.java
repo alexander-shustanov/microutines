@@ -19,7 +19,7 @@ public class Coroutine extends Suspendable {
 
     @Override
     public void run(Scope scope) {
-//        long start = 0;//System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
 
         System.out.println("Hello");
@@ -47,6 +47,8 @@ public class Coroutine extends Suspendable {
         }
 
         System.out.println(atomicInteger.get());
+
+        System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
 
 //                scope.launchAwait(Context.EMPTY, new Suspendable() {
 //                    @Override

@@ -1,50 +1,91 @@
 package joroutine;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.AnalyzerAdapter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class SuspendableInfoMethodCollector extends MethodVisitor {
+public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
+    @SuppressWarnings("SpellCheckingInspection")
+    private static final char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+
+    private static String nextVar(int index) {
+        if (index > chars.length * chars.length)
+            throw new IllegalArgumentException("only chars.length * chars.length variables are supported for now");
+
+        int f = index / chars.length;
+        int s = index % chars.length;
+
+        return String.copyValueOf(new char[]{chars[s], chars[f]});
+    }
+
     private int count = 0;
-    private Map<Integer, LocalVariable> variables = new HashMap<>();
+    private List<StackInfo> stackInfos = new ArrayList<>();
+
     private int maxLocals;
     private ClassLoader classLoader;
 
-    public SuspendableInfoMethodCollector(ClassLoader classLoader) {
-        super(Opcodes.ASM7);
+    public SuspendableInfoMethodCollector(ClassLoader classLoader, String owner, int access,
+                                          String name, String desc) {
+        super(Opcodes.ASM7, owner, access, name, desc, new MethodVisitor(Opcodes.ASM7) {
+        });
         this.classLoader = classLoader;
     }
 
-    @Override
-    public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-        super.visitLocalVariable(name, descriptor, signature, start, end, index);
-        variables.put(index, new LocalVariable(name, index, descriptor));
-    }
+    public List<SuspendInfo> getSuspendInfos() {
+        Map<Object, List<Object>> groupedByType = stackInfos.stream()
+                .flatMap(stackInfo -> stackInfo.getVariableTypes().stream())
+                .collect(Collectors.groupingBy(o -> o));
 
-    @Override
-    public void visitFrame(int type, int numLocal, Object[] local, int numStack, Object[] stack) {
-        super.visitFrame(type, numLocal, local, numStack, stack);
+        Map<Object, List<String>> fieldsByType = new HashMap<>();
 
-        for (int i = 0; i < local.length; i++) {
-            if (!variables.containsKey(i) && local[i] != null && local[i] != Opcodes.TOP) {
-                String descriptor = createDescriptor(local[i]);
-                if (descriptor != null)
-                    variables.put(i, new LocalVariable("unnamed", i, descriptor));
+        String postfix = "$S";
+
+        int fieldIndex = 0;
+
+        for (Map.Entry<Object, List<Object>> entry : groupedByType.entrySet()) {
+            ArrayList<String> names = new ArrayList<>();
+            fieldsByType.put(entry.getKey(), names);
+
+            for (Object ignored : entry.getValue()) {
+                names.add(nextVar(fieldIndex++) + postfix);
             }
         }
+
+        List<SuspendInfo> suspendInfos = new ArrayList<>();
+        for (StackInfo stackInfo : stackInfos) {
+            Map<Object, ArrayList<String>> fieldsByTypeLocal = copyFields(fieldsByType);
+
+            List<SuspendInfo.VarToFieldMapping> mappings = new ArrayList<>();
+            mappings.add(new SuspendInfo.VarToFieldMapping(1, new SuspendInfo.Field("scope$S", getDescriptor(stackInfo.getVariableTypes().get(1)))));
+            for (int i = 2 /*skip `this` variable*/; i < stackInfo.getVariableTypes().size(); i++) {
+                Object variableType = stackInfo.getVariableTypes().get(i);
+
+                ArrayList<String> thisTypeField = fieldsByTypeLocal.get(variableType);
+                String descriptor = getDescriptor(variableType);
+                if (!descriptor.equals("T")) {
+                    mappings.add(new SuspendInfo.VarToFieldMapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
+                }
+            }
+
+
+            suspendInfos.add(new SuspendInfo(mappings));
+        }
+
+        return Collections.unmodifiableList(suspendInfos);
     }
 
-    private String createDescriptor(Object o) {
+
+    private String getDescriptor(Object o) {
         if (o instanceof String)
             return "L" + o + ";";
 
         if (o instanceof Integer) {
             switch ((Integer) o) {
+                case 0: //ITEM_TOP
+                    return "T";
 
                 case 1: //ITEM_INTEGER
                     return "I";
@@ -59,10 +100,17 @@ public class SuspendableInfoMethodCollector extends MethodVisitor {
         return null;
     }
 
+    private Map<Object, ArrayList<String>> copyFields(Map<Object, List<String>> fieldsByType) {
+        return fieldsByType.entrySet()
+                .stream().collect(Collectors.toMap(Map.Entry::getKey, objectListEntry -> new ArrayList<>(objectListEntry.getValue())));
+    }
+
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-        if (Utils.isSuspendPoint(classLoader, owner, name))
-            count++;
+        if (Utils.isSuspendPoint(classLoader, owner, name)) {
+            stackInfos.add(new StackInfo(count++, new ArrayList<>(locals)));
+        }
+        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
     }
 
     @Override
@@ -73,10 +121,6 @@ public class SuspendableInfoMethodCollector extends MethodVisitor {
 
     public int getLabelCount() {
         return count;
-    }
-
-    public List<LocalVariable> getVariables() {
-        return new ArrayList<>(variables.values());
     }
 
     public int getMaxLocals() {

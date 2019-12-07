@@ -76,7 +76,7 @@ public class ProcessSuspendableTask extends DefaultTask {
         }
 
         ClassReader classReader = new ClassReader(Files.readAllBytes(path));
-        ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+        ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS) {
             @Override
             protected ClassLoader getClassLoader() {
                 return classLoader;

@@ -3,10 +3,8 @@ package joroutine;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SuspendableConverter {
     private final Method runMethod;
@@ -53,7 +51,6 @@ public class SuspendableConverter {
             }
 
 
-
             @Override
             public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                 if (name.equals("run")) {
@@ -61,31 +58,24 @@ public class SuspendableConverter {
                         return new MethodVisitor(api) { // delete bridge method
                         };
 
-                    return new SuspendableMethodConverter(super.visitMethod(access, name, "()Ljava/lang/Object;", null, exceptions), classLoader, currentClass, runMethodInfo);
+                    return new SuspendableMethodConverter(classLoader, currentClass, access, "()Ljava/lang/Object;", super.visitMethod(access, name, "()Ljava/lang/Object;", null, exceptions), runMethodInfo);
                 }
-//
-//                if (name.equals("<init>")) {
-//                    return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-//                        @Override
-//                        public void visitCode() {
-//                            super.visitCode();
-//                            super.visitVarInsn(Opcodes.ALOAD, 0);
-//                            super.visitIincInsn(Opcodes.BIPUSH, runMethodInfo.getLabelCount() + 1);
-//                            super.visitFieldInsn(Opcodes.PUTFIELD, currentClass.getName().replace('.', '/'), "maxLabel$S$S", "I");
-//                        }
-//                    };
-//                }
 
                 return super.visitMethod(access, name, descriptor, signature, exceptions);
             }
 
             @Override
             public void visitEnd() {
-                runMethodInfo.getVariables().stream().filter(localVariable -> !localVariable.name.equals("this")).forEach(localVariable -> {
-                    super.visitField(Opcodes.ACC_PRIVATE, localVariable.name + "$S", localVariable.descriptor, null, null);
-                });
+                List<SuspendInfo.Field> fields = runMethodInfo.getSuspendInfos().stream()
+                        .flatMap(suspendInfo -> suspendInfo.getMappings().stream().map(varToFieldMapping -> varToFieldMapping.field))
+                        .distinct().collect(Collectors.toList());
+
+                for (SuspendInfo.Field field : fields) {
+                    super.visitField(Opcodes.ACC_PRIVATE, field.fieldName, field.fieldDescriptor, null, null);
+                }
+
                 super.visitField(Opcodes.ACC_PRIVATE, "label$S$S", "I", null, null);
-                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC , "maxLabel$S$S", "I", null, runMethodInfo.getLabelCount() + 1);
+                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "maxLabel$S$S", "I", null, runMethodInfo.getLabelCount() + 1);
 
                 super.visitEnd();
             }
@@ -98,7 +88,7 @@ public class SuspendableConverter {
             @Override
             public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                 if (name.equals("run") && (access & Opcodes.ACC_BRIDGE) == 0 && Objects.equals(signature, Utils.getSignature(runMethod))) {
-                    SuspendableInfoMethodCollector counter = new SuspendableInfoMethodCollector(classLoader);
+                    SuspendableInfoMethodCollector counter = new SuspendableInfoMethodCollector(classLoader, runMethod.getDeclaringClass().getName(), access, name, descriptor);
                     yieldCalls.put(new MethodId(access, name, descriptor, signature, exceptions), counter);
                     return counter;
                 }
