@@ -18,7 +18,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private Class currentClass;
     private SuspendableInfoMethodCollector methodInfo;
 
-    int yieldN = 0;
+    int suspensionNumber = 0;
 
     public SuspendableMethodConverter(ClassLoader classLoader, Class currentClass, int access, String descriptor, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
         super(Opcodes.ASM7, /*access, descriptor, */methodVisitor);
@@ -65,7 +65,9 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         super.visitLabel(startLabel);
 
+
         restoreFrame();
+        suspensionNumber++;
     }
 
     @Override
@@ -75,7 +77,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         if (suspendPoint) {
             super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
-            super.visitIntInsn(Opcodes.BIPUSH, yieldN + 1);
+            super.visitIntInsn(Opcodes.BIPUSH, suspensionNumber);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
 
             saveFrame();
@@ -83,9 +85,9 @@ public class SuspendableMethodConverter extends MethodVisitor {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         if (suspendPoint) {
             doReturn();
-            super.visitLabel(labels[yieldN]);
+            super.visitLabel(labels[suspensionNumber - 1]);
             restoreFrame();
-            yieldN++;
+            suspensionNumber++;
         }
 
     }
@@ -96,9 +98,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     }
 
     private void restoreFrame() {
-        if (suspendInfos.isEmpty())
-            return;
-        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(yieldN).getMappings()) {
+        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(suspensionNumber).getMappings()) {
             super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
             super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
 
@@ -125,10 +125,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     }
 
     private void saveFrame() {
-        if (suspendInfos.isEmpty())
-            return;
-
-        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(yieldN).getMappings()) {
+        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(suspensionNumber).getMappings()) {
             int opcode = Opcodes.ALOAD;
             switch (mapping.field.fieldDescriptor) {
                 case "I":

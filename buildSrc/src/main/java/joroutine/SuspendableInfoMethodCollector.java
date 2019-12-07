@@ -106,6 +106,13 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     }
 
     @Override
+    public void visitCode() {
+        super.visitCode();
+
+        stackInfos.add(new StackInfo(count++, new ArrayList<>(locals)));
+    }
+
+    @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         if (Utils.isSuspendPoint(classLoader, owner, name)) {
             stackInfos.add(new StackInfo(count++, new ArrayList<>(locals)));
@@ -120,7 +127,7 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     }
 
     public int getLabelCount() {
-        return count;
+        return count - 1;
     }
 
     public int getMaxLocals() {
