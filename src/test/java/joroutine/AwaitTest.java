@@ -13,11 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AwaitTest {
     @Test
     public void testAwait() {
-        AtomicInteger result = new AtomicInteger(); // for now, launch from blocking context can not return the result.
-
-        BlockingContext.INSTANCE.launch(new CoroutineSuspendable() {
+        int result = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
             @Override
-            public void run(CoroutineScope scope) {
+            public Integer run(CoroutineScope scope) {
                 Deferred<Integer> first = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
                     @Override
                     public Integer run(CoroutineScope scope) {
@@ -42,10 +40,36 @@ public class AwaitTest {
                     }
                 });
 
-                result.set(scope.await(first) + scope.await(second) + scope.await(third));
+                return scope.await(first) + scope.await(second) + scope.await(third);
             }
         });
 
-        Assert.assertEquals(700, result.get());
+        Assert.assertEquals(700, result);
+    }
+
+    @Test
+    public void testNestedAwait() {
+        int result = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+            @Override
+            public Integer run(CoroutineScope scope) {
+                Deferred<Integer> async = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                    @Override
+                    public Integer run(CoroutineScope scope) {
+                        scope.delay(100);
+
+                        return scope.await(scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                            @Override
+                            public Integer run(CoroutineScope scope) {
+                                scope.delay(100);
+                                return 200;
+                            }
+                        })) + 100;
+                    }
+                });
+                return scope.await(async) + 100;
+            }
+        });
+
+        Assert.assertEquals(400, result);
     }
 }
