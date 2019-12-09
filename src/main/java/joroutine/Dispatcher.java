@@ -9,16 +9,20 @@ public abstract class Dispatcher {
     }
 
     public final void dispatch(CoroutineContext context, Continuation continuation) {
+        dispatch(context, continuation, null);
+    }
+
+    public final void dispatch(CoroutineContext context, Continuation continuation, Object resumeWith) {
         doDispatch(() -> {
             CoroutineContext saved = CoroutineContext.getCurrent();
             context.set();
             try {
-                return continuation.run();
+                continuation.run(resumeWith);
             } finally {
                 saved.set();
             }
         });
     }
 
-    protected abstract void doDispatch(Continuation continuation);
+    protected abstract void doDispatch(Runnable runnable);
 }

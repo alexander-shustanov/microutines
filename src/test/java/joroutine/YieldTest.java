@@ -112,7 +112,7 @@ public class YieldTest {
                 .collect(Collectors.toList());
 
         assertEquals(200, ((int) list.get(0)));
-        assertEquals(400, ((int) list.get(2)));
-        assertEquals(600, ((int) list.get(3)));
+        assertEquals(400, ((int) list.get(1)));
+        assertEquals(600, ((int) list.get(2)));
     }
 }

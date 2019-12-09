@@ -4,9 +4,8 @@ import java.lang.reflect.Field;
 
 public interface Continuation<T> {
     Object SUSPEND = new Object();
-    Object END = new Object();
 
-    T run();
+    T run(Object resumeWith);
 
     default boolean isDone() {
         try {

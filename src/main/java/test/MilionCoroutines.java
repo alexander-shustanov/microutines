@@ -7,11 +7,11 @@ import joroutine.CoroutineSuspendable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Coroutine extends CoroutineSuspendable {
+public class MilionCoroutines extends CoroutineSuspendable {
     private int numCoroutines;
     private CountDownLatch latch;
 
-    public Coroutine(int numCoroutines) {
+    public MilionCoroutines(int numCoroutines) {
         this.numCoroutines = numCoroutines;
         this.latch = new CountDownLatch(numCoroutines);
     }

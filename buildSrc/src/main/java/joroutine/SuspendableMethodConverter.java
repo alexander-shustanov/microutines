@@ -1,8 +1,8 @@
 package joroutine;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import java.util.List;
 
@@ -12,14 +12,14 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private final Label[] labels;
     private final String myClassJvmName;
     private final int labelVarIndex;
-    private final int thisVarOrder;
+    private final int thisVarIndex;
     private final List<SuspendInfo> suspendInfos;
 
     private SuspendableInfoMethodCollector methodInfo;
 
     int suspensionNumber = 0;
 
-    public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
+    public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo, int access, String name, String descriptor) {
         super(Opcodes.ASM7, methodVisitor);
         this.classLoader = classLoader;
         this.methodInfo = methodInfo;
@@ -30,7 +30,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
         this.numLabels = methodInfo.getLabelCount();
         this.labelVarIndex = methodInfo.getMaxLocals();
 
-        thisVarOrder = 0;
+        thisVarIndex = 0;
 
 
         labels = new Label[numLabels];
@@ -45,7 +45,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         Label startLabel = new Label();
 
-        super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+        super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
         super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, "label$S$S", "I");
         super.visitVarInsn(Opcodes.ISTORE, labelVarIndex);
 
@@ -74,7 +74,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
 
         if (suspendPoint) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, suspensionNumber);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
 
@@ -97,7 +97,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
     private void restoreFrame() {
         for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(suspensionNumber).getMappings()) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
 
             int opcode = Opcodes.ASTORE;
@@ -142,7 +142,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
                     opcode = Opcodes.DLOAD;
                     break;
             }
-            super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitVarInsn(opcode, mapping.varIndex);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
@@ -151,7 +151,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     @Override
     public void visitInsn(int opcode) {
         if (opcode == Opcodes.RETURN) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarOrder);
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
             doReturn();

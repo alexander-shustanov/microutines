@@ -25,7 +25,7 @@ public class Sequence<T> implements Iterable<T> {
                             nextIterator = null;
                         }
                     }
-                    nextStep.run();
+                    nextStep.run(null);
                     if (nextIterator != null)
                         return hasNext();
                 }

@@ -29,8 +29,13 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
 
     public SuspendableInfoMethodCollector(ClassLoader classLoader, String owner, int access,
                                           String name, String desc) {
-        super(Opcodes.ASM7, owner, access, name, desc, new MethodVisitor(Opcodes.ASM7) {
+        this(classLoader, owner, access, name, desc, new MethodVisitor(Opcodes.ASM7) {
         });
+    }
+
+    public SuspendableInfoMethodCollector(ClassLoader classLoader, String owner, int access,
+                                          String name, String desc, MethodVisitor methodVisitor) {
+        super(Opcodes.ASM7, owner, access, name, desc, methodVisitor);
         this.classLoader = classLoader;
     }
 
@@ -59,8 +64,8 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
             Map<Object, ArrayList<String>> fieldsByTypeLocal = copyFields(fieldsByType);
 
             List<SuspendInfo.VarToFieldMapping> mappings = new ArrayList<>();
-            mappings.add(new SuspendInfo.VarToFieldMapping(1, new SuspendInfo.Field("scope$S", getDescriptor(stackInfo.getVariableTypes().get(1)))));
-            for (int i = 2 /*skip `this` variable*/; i < stackInfo.getVariableTypes().size(); i++) {
+            mappings.add(new SuspendInfo.VarToFieldMapping(2, new SuspendInfo.Field("scope$S", getDescriptor(stackInfo.getVariableTypes().get(2)))));
+            for (int i = 3 /*skip `this` variable*/; i < stackInfo.getVariableTypes().size(); i++) {
                 Object variableType = stackInfo.getVariableTypes().get(i);
 
                 ArrayList<String> thisTypeField = fieldsByTypeLocal.get(variableType);
@@ -109,15 +114,39 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     public void visitCode() {
         super.visitCode();
 
-        stackInfos.add(new StackInfo(count++, new ArrayList<>(locals)));
+        stackInfos.add(new StackInfo(count++, saveLocals()));
+    }
+
+    @Override
+    public void visitFrame(int type, int numLocal, Object[] local, int numStack, Object[] stack) {
+        super.visitFrame(type, numLocal, local, numStack, stack);
     }
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         if (Utils.isSuspendPoint(classLoader, owner, name)) {
-            stackInfos.add(new StackInfo(count++, new ArrayList<>(locals)));
+            stackInfos.add(new StackInfo(count++, saveLocals()));
         }
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+    }
+
+    private ArrayList<Object> saveLocals() {
+//        ArrayList<Object> locals = new ArrayList<>();
+//        for (int i = 0; i < this.locals.size(); i++) {
+//            Object e = this.locals.get(i);
+//            locals.add(e);
+//            if (e instanceof Integer) {
+//                switch (((Integer) e)) {
+//                    case 3:
+//                    case 4:
+//                        i++;
+//
+//                }
+//            }
+//        }
+//
+//        return locals;
+        return new ArrayList<>(locals);
     }
 
     @Override

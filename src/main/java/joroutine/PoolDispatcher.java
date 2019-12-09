@@ -1,6 +1,5 @@
 package joroutine;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 public class PoolDispatcher extends Dispatcher {
@@ -12,7 +11,7 @@ public class PoolDispatcher extends Dispatcher {
     }
 
     @Override
-    protected void doDispatch(Continuation continuation) {
-        executor.submit((Callable<Object>) continuation::run);
+    protected void doDispatch(Runnable block) {
+        executor.submit(block);
     }
 }

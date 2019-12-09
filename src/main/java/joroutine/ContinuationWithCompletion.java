@@ -10,8 +10,8 @@ public class ContinuationWithCompletion<T extends Scope> implements Continuation
     }
 
     @Override
-    public T run() {
-        T result = delegate.run();
+    public T run(Object resumeWith) {
+        T result = delegate.run(resumeWith);
         if (delegate.isDone()) {
             completion.run();
         }
