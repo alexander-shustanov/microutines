@@ -1,4 +1,6 @@
-package joroutine;
+package joroutine.coroutine;
+
+import joroutine.core.Continuation;
 
 @SuppressWarnings("rawtypes")
 public abstract class Dispatcher {

@@ -1,4 +1,7 @@
-package joroutine;
+package joroutine.sequence;
+
+import joroutine.core.Suspend;
+import joroutine.core.Scope;
 
 public class SequenceScope<T> implements Scope {
     private Sequence<T> sequence;

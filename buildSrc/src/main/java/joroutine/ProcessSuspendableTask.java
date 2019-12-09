@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public class ProcessSuspendableTask extends DefaultTask {
-    public static final String SUSPENDABLE = "joroutine.Suspendable";
+    public static final String SUSPENDABLE = "joroutine.core.Suspendable";
 
     @InputFiles
     FileCollection classPath;

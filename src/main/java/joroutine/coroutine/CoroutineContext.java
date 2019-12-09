@@ -1,4 +1,8 @@
-package joroutine;
+package joroutine.coroutine;
+
+import joroutine.core.*;
+
+import java.util.function.Consumer;
 
 @SuppressWarnings("rawtypes")
 public class CoroutineContext {
@@ -18,14 +22,22 @@ public class CoroutineContext {
     }
 
     public void launch(CoroutineSuspendable suspendable) {
-        Continuation continuation = Magic.createContinuation(suspendable, new ScopeImpl());
+        Continuation continuation = Magic.createContinuation(suspendable, new CoroutineScopeImpl());
         dispatcher.dispatch(this, continuation);
     }
 
-    public void launch(Suspendable suspendable, Runnable completion) {
-        ScopeImpl scope = new ScopeImpl();
+    public <T> void launch(SuspendableWithResult<CoroutineScope, T> suspendable, Consumer<T> completion) {
+        CoroutineScopeImpl scope = new CoroutineScopeImpl();
         Continuation continuation = Magic.createContinuation(suspendable, scope);
-        ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation, completion);
+        ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation,  completion);
+        scope.continuation = wrappedContinuation;
+        dispatcher.dispatch(this, wrappedContinuation);
+    }
+
+    public void launch(CoroutineSuspendable suspendable, Runnable completion) {
+        CoroutineScopeImpl scope = new CoroutineScopeImpl();
+        Continuation continuation = Magic.createContinuation(suspendable, scope);
+        ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation, o -> completion.run());
         scope.continuation = wrappedContinuation;
         dispatcher.dispatch(this, wrappedContinuation);
     }

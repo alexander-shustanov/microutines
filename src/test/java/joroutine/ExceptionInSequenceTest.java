@@ -1,9 +1,9 @@
 package joroutine;
 
+import joroutine.core.Suspendable;
+import joroutine.sequence.Sequence;
+import joroutine.sequence.SequenceScope;
 import org.junit.Test;
-
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class ExceptionInSequenceTest {
     @Test(expected = RuntimeException.class)

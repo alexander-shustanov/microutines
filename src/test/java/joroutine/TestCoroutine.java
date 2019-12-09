@@ -1,5 +1,9 @@
 package joroutine;
 
+import joroutine.coroutine.BlockingContext;
+import joroutine.coroutine.CoroutineContext;
+import joroutine.coroutine.CoroutineScope;
+import joroutine.coroutine.CoroutineSuspendable;
 import org.junit.Assert;
 import org.junit.Test;
 

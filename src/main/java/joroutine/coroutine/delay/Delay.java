@@ -1,7 +1,7 @@
-package joroutine.eventloop;
+package joroutine.coroutine.delay;
 
-import joroutine.Continuation;
-import joroutine.CoroutineContext;
+import joroutine.core.Continuation;
+import joroutine.coroutine.CoroutineContext;
 
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArraySet;

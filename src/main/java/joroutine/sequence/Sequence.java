@@ -1,4 +1,8 @@
-package joroutine;
+package joroutine.sequence;
+
+import joroutine.core.Magic;
+import joroutine.core.Suspendable;
+import joroutine.core.Continuation;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

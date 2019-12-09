@@ -1,4 +1,4 @@
-package joroutine;
+package joroutine.core;
 
 public interface Scope {
 

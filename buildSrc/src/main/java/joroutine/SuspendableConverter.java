@@ -97,8 +97,8 @@ public class SuspendableConverter {
                 access |= Opcodes.ACC_PUBLIC;
                 String[] newInterfaces = new String[interfaces.length + 1];
                 System.arraycopy(interfaces, 0, newInterfaces, 0, interfaces.length);
-                newInterfaces[newInterfaces.length - 1] = "joroutine/Continuation";
-                signature += "Ljoroutine/Continuation;";
+                newInterfaces[newInterfaces.length - 1] = "joroutine/core/Continuation";
+                signature += "Ljoroutine/core/Continuation;";
                 super.visit(version, access, name, signature, superName, newInterfaces);
             }
 

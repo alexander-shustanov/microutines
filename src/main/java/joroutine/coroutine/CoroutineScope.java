@@ -1,4 +1,8 @@
-package joroutine;
+package joroutine.coroutine;
+
+import joroutine.core.Scope;
+import joroutine.core.Suspend;
+import joroutine.core.SuspendableWithResult;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -21,12 +25,16 @@ public interface CoroutineScope extends Scope {
         throw new RuntimeException("Unsupported");
     }
 
-    default <R> Deferred<R> async(SuspendableWithResult<CoroutineScope, R> suspendable) {
+    default <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable) {
         return null;
     }
 
+    default <R> Deferred<R> async(SuspendableWithResult<CoroutineScope, R> suspendable) {
+        return async(CoroutineContext.EMPTY, suspendable);
+    }
+
     @Suspend
-    default void await(Deferred deferred) {
+    default <R> R await(Deferred<R> deferred) {
         throw new RuntimeException();
     }
 

@@ -1,7 +1,7 @@
-package joroutine.eventloop;
+package joroutine.coroutine.delay;
 
-import joroutine.CoroutineContext;
-import joroutine.Continuation;
+import joroutine.coroutine.CoroutineContext;
+import joroutine.core.Continuation;
 
 @SuppressWarnings("rawtypes")
 public class Event {

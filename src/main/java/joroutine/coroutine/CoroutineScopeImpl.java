@@ -1,14 +1,17 @@
-package joroutine;
+package joroutine.coroutine;
 
-import joroutine.eventloop.Delay;
+import joroutine.core.Continuation;
+import joroutine.core.Suspend;
+import joroutine.core.SuspendableWithResult;
+import joroutine.coroutine.delay.Delay;
 
 import java.util.concurrent.CountDownLatch;
 
-import static joroutine.CoroutineContext.getCurrent;
+import static joroutine.coroutine.CoroutineContext.getCurrent;
 
 @SuppressWarnings("rawtypes")
-class ScopeImpl implements CoroutineScope {
-    Continuation continuation;
+public class CoroutineScopeImpl implements CoroutineScope {
+    public Continuation continuation;
 
     @Override
     @Suspend
@@ -18,8 +21,26 @@ class ScopeImpl implements CoroutineScope {
 
     @Override
     @Suspend
-    public void await(Deferred deferred) {
-        throw new RuntimeException("Not implemented");
+    public <R> R await(Deferred<R> deferred) {
+        CoroutineContext current = getCurrent();
+
+        synchronized (deferred) {
+            if (deferred.isDone()) {
+                return deferred.getValue();
+            }
+            deferred.addWaiter(r -> {
+                current.dispatcher.dispatch(current, continuation, r);
+            });
+
+            return (R) Continuation.SUSPEND;
+        }
+    }
+
+    @Override
+    public <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable) {
+        Deferred<R> deferred = new Deferred<>();
+        context.launch(suspendable, deferred::accept);
+        return deferred;
     }
 
     @Override

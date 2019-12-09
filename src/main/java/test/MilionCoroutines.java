@@ -1,8 +1,8 @@
 package test;
 
-import joroutine.CoroutineContext;
-import joroutine.CoroutineScope;
-import joroutine.CoroutineSuspendable;
+import joroutine.coroutine.CoroutineContext;
+import joroutine.coroutine.CoroutineScope;
+import joroutine.coroutine.CoroutineSuspendable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;

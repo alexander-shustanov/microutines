@@ -1,5 +1,8 @@
 package joroutine;
 
+import joroutine.core.Suspendable;
+import joroutine.sequence.Sequence;
+import joroutine.sequence.SequenceScope;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -8,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;

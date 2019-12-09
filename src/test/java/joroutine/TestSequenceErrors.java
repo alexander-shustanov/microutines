@@ -1,5 +1,8 @@
 package joroutine;
 
+import joroutine.core.Suspendable;
+import joroutine.sequence.Sequence;
+import joroutine.sequence.SequenceScope;
 import org.junit.Test;
 
 public class TestSequenceErrors {

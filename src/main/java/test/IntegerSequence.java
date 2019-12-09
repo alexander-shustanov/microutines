@@ -1,9 +1,5 @@
 package test;
 
-import joroutine.Sequence;
-import joroutine.SequenceScope;
-import joroutine.Suspendable;
-
 public class IntegerSequence{}/* extends Suspendable<SequenceScope<Integer>> {
 
     @Override

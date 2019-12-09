@@ -29,7 +29,6 @@ public class Utils {
         owner = owner.replace('/', '.');
         try {
             Class<?> aClass = classLoader.loadClass(owner);
-            Method[] methods = aClass.getMethods();
             for (Method method : aClass.getMethods()) {
                 if (method.getName().equals(methodName)) {
                     if (isSuspendMethod(classLoader, method)) return true;
@@ -48,6 +47,6 @@ public class Utils {
 
     private static boolean isSuspendMethod(ClassLoader classLoader, Method method) throws ClassNotFoundException {
         //noinspection unchecked
-        return method.isAnnotationPresent((Class<? extends Annotation>) classLoader.loadClass("joroutine.Suspend"));
+        return method.isAnnotationPresent((Class<? extends Annotation>) classLoader.loadClass("joroutine.core.Suspend"));
     }
 }
