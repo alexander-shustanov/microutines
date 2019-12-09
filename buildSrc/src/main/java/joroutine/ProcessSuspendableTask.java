@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 public class ProcessSuspendableTask extends DefaultTask {
     public static final String SUSPENDABLE = "joroutine.core.Suspendable";
+    public static final String SUSPENDABLE_WITH_RESULT = "joroutine.core.SuspendableWithResult";
 
     @InputFiles
     FileCollection classPath;
@@ -71,8 +72,12 @@ public class ProcessSuspendableTask extends DefaultTask {
         Class<?> currentClass = classLoader.loadClass(className);
 
         Class<?> suspendable = classLoader.loadClass(SUSPENDABLE);
+        Class<?> suspendableWithResult = classLoader.loadClass(SUSPENDABLE_WITH_RESULT);
 
-        if (!suspendable.isAssignableFrom(currentClass) || Modifier.isAbstract(currentClass.getModifiers())) {
+        boolean isSuspendable = suspendable.isAssignableFrom(currentClass) && !Modifier.isAbstract(currentClass.getModifiers());
+        boolean isSuspendableWithResult = suspendableWithResult.isAssignableFrom(currentClass) && !Modifier.isAbstract(currentClass.getModifiers());
+
+        if (!isSuspendable && !isSuspendableWithResult) {
             return;
         }
 

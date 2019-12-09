@@ -1,9 +1,9 @@
 package joroutine;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.LocalVariablesSorter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SuspendableMethodConverter extends MethodVisitor {
@@ -72,19 +72,26 @@ public class SuspendableMethodConverter extends MethodVisitor {
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         boolean suspendPoint = Utils.isSuspendPoint(classLoader, owner, name);
 
-
+        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         if (suspendPoint) {
+            boolean voidReturn = Type.getReturnType(descriptor) == Type.VOID_TYPE;
+
+            if (!voidReturn) {
+                super.visitInsn(Opcodes.POP);
+            }
+
             super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, suspensionNumber);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
 
             saveFrame();
-        }
-        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-        if (suspendPoint) {
+
             doReturn();
             super.visitLabel(labels[suspensionNumber - 1]);
             restoreFrame();
+            if (!voidReturn) {
+                super.visitVarInsn(Opcodes.ALOAD, 1);
+            }
             suspensionNumber++;
         }
 
@@ -96,7 +103,8 @@ public class SuspendableMethodConverter extends MethodVisitor {
     }
 
     private void restoreFrame() {
-        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(suspensionNumber).getMappings()) {
+        SuspendInfo suspendInfo = suspendInfos.get(suspensionNumber);
+        for (SuspendInfo.Mapping mapping : suspendInfo.getVariableMappings()) {
             super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
 
@@ -118,12 +126,18 @@ public class SuspendableMethodConverter extends MethodVisitor {
                     opcode = Opcodes.DSTORE;
                     break;
             }
-            super.visitVarInsn(opcode, mapping.varIndex);
+            super.visitVarInsn(opcode, mapping.index);
+        }
+
+        for (SuspendInfo.Mapping mapping : suspendInfo.getStackMappings()) {
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
     }
 
     private void saveFrame() {
-        for (SuspendInfo.VarToFieldMapping mapping : suspendInfos.get(suspensionNumber).getMappings()) {
+        SuspendInfo suspendInfo = suspendInfos.get(suspensionNumber);
+        for (SuspendInfo.Mapping mapping : suspendInfo.getVariableMappings()) {
             int opcode = Opcodes.ALOAD;
             switch (mapping.field.fieldDescriptor) {
                 case "I":
@@ -143,7 +157,15 @@ public class SuspendableMethodConverter extends MethodVisitor {
                     break;
             }
             super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
-            super.visitVarInsn(opcode, mapping.varIndex);
+            super.visitVarInsn(opcode, mapping.index);
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
+        }
+
+        List<SuspendInfo.Mapping> stackMappings = new ArrayList<>(suspendInfo.getStackMappings());
+        Collections.reverse(stackMappings);
+        for (SuspendInfo.Mapping mapping : stackMappings) {
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitInsn(Opcodes.SWAP);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
     }
@@ -155,7 +177,12 @@ public class SuspendableMethodConverter extends MethodVisitor {
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
             doReturn();
-        } else {
+        } else if (opcode == Opcodes.ARETURN || opcode == Opcodes.DRETURN || opcode == Opcodes.LRETURN || opcode == Opcodes.FRETURN || opcode == Opcodes.IRETURN) {
+            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
+            super.visitInsn(opcode);
+        }else {
             super.visitInsn(opcode);
         }
     }

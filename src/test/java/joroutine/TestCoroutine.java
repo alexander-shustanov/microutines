@@ -20,6 +20,8 @@ public class TestCoroutine {
         BlockingContext.INSTANCE.launch(new CoroutineSuspendable() {
             @Override
             public void run(CoroutineScope scope) {
+                long startTime = System.currentTimeMillis();
+
                 CountDownLatch latch = new CountDownLatch(million);
 
                 for (int i = 0; i < million; i++) {
@@ -35,6 +37,8 @@ public class TestCoroutine {
                 }
 
                 scope.await(latch);
+
+                System.out.println(System.currentTimeMillis() - startTime);
             }
         });
 

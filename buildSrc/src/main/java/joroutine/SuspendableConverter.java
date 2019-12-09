@@ -1,6 +1,9 @@
 package joroutine;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.AnalyzerAdapter;
 import org.objectweb.asm.tree.*;
 
@@ -9,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SuspendableConverter {
     private final Method runMethod;
@@ -102,30 +106,16 @@ public class SuspendableConverter {
                 super.visit(version, access, name, signature, superName, newInterfaces);
             }
 
-
-            @Override
-            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                if (name.equals("run")) {
-//                    if ((access & Opcodes.ACC_BRIDGE) != 0)
-                    return new MethodVisitor(api) { // delete bridge method
-                    };
-
-//                    descriptor = "(Ljava/lang/Object;)Ljava/lang/Object;";
-//
-//                    return new SuspendableMethodConverter(classLoader, currentClass, super.visitMethod(access, name, descriptor, null, exceptions), runMethodInfo, access, name, descriptor);
-                }
-
-                return super.visitMethod(access, name, descriptor, signature, exceptions);
-            }
-
             @Override
             public void visitEnd() {
                 List<SuspendInfo.Field> fields = suspendableInfo.getSuspendInfos().stream()
-                        .flatMap(suspendInfo -> suspendInfo.getMappings().stream().map(varToFieldMapping -> varToFieldMapping.field))
+                        .flatMap(suspendInfo -> Stream.concat(suspendInfo.getVariableMappings().stream(), suspendInfo.getStackMappings().stream()))
+                        .map(varToFieldMapping -> varToFieldMapping.field)
                         .distinct().collect(Collectors.toList());
 
                 for (SuspendInfo.Field field : fields) {
-                    super.visitField(Opcodes.ACC_PRIVATE, field.fieldName, field.fieldDescriptor, null, null);
+                    if (!field.fieldDescriptor.equals("T"))
+                        super.visitField(Opcodes.ACC_PRIVATE, field.fieldName, field.fieldDescriptor, null, null);
                 }
 
                 super.visitField(Opcodes.ACC_PRIVATE, "label$S$S", "I", null, null);
@@ -134,6 +124,8 @@ public class SuspendableConverter {
                 super.visitEnd();
             }
         }, ClassReader.SKIP_FRAMES);
+
+        resultClass.methods.removeIf(methodNode -> methodNode.name.equals("run"));
 
         resultClass.methods.add(resultMethod);
 
@@ -144,45 +136,4 @@ public class SuspendableConverter {
         return new MethodNode(Opcodes.ASM7, method.access, method.name, method.desc, method.signature, method.exceptions.toArray(new String[0]));
     }
 
-//    private Map<MethodId, SuspendableInfoMethodCollector> collectYieldCallInfo(ClassReader classReader, Method runMethod) {
-//        Map<MethodId, SuspendableInfoMethodCollector> yieldCalls = new HashMap<>();
-//
-//        MethodNode methodNode = new MethodNode(Opcodes.ASM7);
-//
-//        classReader.accept(new ClassVisitor(Opcodes.ASM7) {
-//            @Override
-//            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-//                if (name.equals("run") && (access & Opcodes.ACC_BRIDGE) == 0 && Objects.equals(signature, Utils.getSignature(runMethod))) {
-//                    SuspendableInfoMethodCollector counter = new SuspendableInfoMethodCollector(classLoader, runMethod.getDeclaringClass().getName(), access, name, "(Ljava/lang/Object;Ljoroutine/CoroutineScope;)V");
-//                    yieldCalls.put(new MethodId(access, name, descriptor, signature, exceptions), counter);
-//                    return counter;
-//                }
-//                return super.visitMethod(access, name, descriptor, signature, exceptions);
-//            }
-//        }, ClassReader.EXPAND_FRAMES);
-//
-//        classReader.accept(new ClassVisitor(Opcodes.ASM7) {
-//            @Override
-//            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-//                if (name.equals("run") && (access & Opcodes.ACC_BRIDGE) == 0 && Objects.equals(signature, Utils.getSignature(runMethod))) {
-//                    return methodNode;
-////                    SuspendableInfoMethodCollector counter = new SuspendableInfoMethodCollector(classLoader, runMethod.getDeclaringClass().getName(), access, name, "(Ljava/lang/Object;Ljoroutine/CoroutineScope;)V");
-////                    yieldCalls.put(new MethodId(access, name, descriptor, signature, exceptions), counter);
-////                    return counter;
-//                }
-//                return super.visitMethod(access, name, descriptor, signature, exceptions);
-//            }
-//        }, ClassReader.EXPAND_FRAMES);
-//
-////        methodNode.desc
-////        methodNode.instructions.forEach(abstractInsnNode -> {
-////            if (abstractInsnNode.getType() == AbstractInsnNode.VAR_INSN) {
-////                if (((VarInsnNode) abstractInsnNode).var > 0) {
-////                    ((VarInsnNode) abstractInsnNode).var++;
-////                }
-////            }
-////        });
-//
-//        return yieldCalls;
-//    }
 }

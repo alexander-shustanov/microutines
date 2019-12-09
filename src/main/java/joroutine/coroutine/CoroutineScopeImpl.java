@@ -26,7 +26,8 @@ public class CoroutineScopeImpl implements CoroutineScope {
 
         synchronized (deferred) {
             if (deferred.isDone()) {
-                return deferred.getValue();
+                current.dispatcher.dispatch(current, continuation, deferred.getValue());
+                return (R) Continuation.SUSPEND;
             }
             deferred.addWaiter(r -> {
                 current.dispatcher.dispatch(current, continuation, r);

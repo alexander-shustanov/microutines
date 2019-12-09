@@ -5,22 +5,28 @@ import java.util.List;
 import java.util.Objects;
 
 public class SuspendInfo {
-    private final List<VarToFieldMapping> mappings;
+    private final List<Mapping> variableMappings;
+    private final List<Mapping> stackMappings;
 
-    public SuspendInfo(List<VarToFieldMapping> mappings) {
-        this.mappings = mappings;
+    public SuspendInfo(List<Mapping> mappings, List<Mapping> stackMappings) {
+        this.variableMappings = mappings;
+        this.stackMappings = stackMappings;
     }
 
-    public List<VarToFieldMapping> getMappings() {
-        return Collections.unmodifiableList(mappings);
+    public List<Mapping> getVariableMappings() {
+        return Collections.unmodifiableList(variableMappings);
     }
 
-    static class VarToFieldMapping {
-        final int varIndex;
+    public List<Mapping> getStackMappings() {
+        return Collections.unmodifiableList(stackMappings);
+    }
+
+    static class Mapping {
+        final int index;
         final Field field;
 
-        VarToFieldMapping(int varIndex, Field field) {
-            this.varIndex = varIndex;
+        Mapping(int index, Field field) {
+            this.index = index;
             this.field = field;
         }
     }

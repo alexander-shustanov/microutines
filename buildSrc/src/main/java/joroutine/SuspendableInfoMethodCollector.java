@@ -6,6 +6,7 @@ import org.objectweb.asm.commons.AnalyzerAdapter;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     @SuppressWarnings("SpellCheckingInspection")
@@ -41,7 +42,7 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
 
     public List<SuspendInfo> getSuspendInfos() {
         Map<Object, List<Object>> groupedByType = stackInfos.stream()
-                .flatMap(stackInfo -> stackInfo.getVariableTypes().stream())
+                .flatMap(stackInfo -> Stream.concat(stackInfo.getVariableTypes().stream(), stackInfo.getStackTypes().stream()))
                 .collect(Collectors.groupingBy(o -> o));
 
         Map<Object, List<String>> fieldsByType = new HashMap<>();
@@ -63,20 +64,29 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
         for (StackInfo stackInfo : stackInfos) {
             Map<Object, ArrayList<String>> fieldsByTypeLocal = copyFields(fieldsByType);
 
-            List<SuspendInfo.VarToFieldMapping> mappings = new ArrayList<>();
-            mappings.add(new SuspendInfo.VarToFieldMapping(2, new SuspendInfo.Field("scope$S", getDescriptor(stackInfo.getVariableTypes().get(2)))));
+            List<SuspendInfo.Mapping> localVarMappings = new ArrayList<>();
+            List<SuspendInfo.Mapping> stackMappings = new ArrayList<>();
+
+
+            localVarMappings.add(new SuspendInfo.Mapping(2, new SuspendInfo.Field("scope$S", getDescriptor(stackInfo.getVariableTypes().get(2)))));
             for (int i = 3 /*skip `this` variable*/; i < stackInfo.getVariableTypes().size(); i++) {
                 Object variableType = stackInfo.getVariableTypes().get(i);
 
                 ArrayList<String> thisTypeField = fieldsByTypeLocal.get(variableType);
                 String descriptor = getDescriptor(variableType);
                 if (!descriptor.equals("T")) {
-                    mappings.add(new SuspendInfo.VarToFieldMapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
+                    localVarMappings.add(new SuspendInfo.Mapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
                 }
             }
 
+            for (int i = 0; i < stackInfo.getStackTypes().size() - 1; i++) {
+                Object variableType = stackInfo.getStackTypes().get(i);
+                ArrayList<String> thisTypeField = fieldsByTypeLocal.get(variableType);
+                String descriptor = getDescriptor(variableType);
+                stackMappings.add(new SuspendInfo.Mapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
+            }
 
-            suspendInfos.add(new SuspendInfo(mappings));
+            suspendInfos.add(new SuspendInfo(localVarMappings, stackMappings));
         }
 
         return Collections.unmodifiableList(suspendInfos);
@@ -114,7 +124,7 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     public void visitCode() {
         super.visitCode();
 
-        stackInfos.add(new StackInfo(count++, saveLocals()));
+        stackInfos.add(new StackInfo(count++, new ArrayList<>(locals), new ArrayList<>(stack)));
     }
 
     @Override
@@ -125,28 +135,12 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         if (Utils.isSuspendPoint(classLoader, owner, name)) {
-            stackInfos.add(new StackInfo(count++, saveLocals()));
+            ArrayList<Object> localsBeforeInvoke = new ArrayList<>(locals);
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+            stackInfos.add(new StackInfo(count++, localsBeforeInvoke, new ArrayList<>(stack)));
+        } else {
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         }
-        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-    }
-
-    private ArrayList<Object> saveLocals() {
-//        ArrayList<Object> locals = new ArrayList<>();
-//        for (int i = 0; i < this.locals.size(); i++) {
-//            Object e = this.locals.get(i);
-//            locals.add(e);
-//            if (e instanceof Integer) {
-//                switch (((Integer) e)) {
-//                    case 3:
-//                    case 4:
-//                        i++;
-//
-//                }
-//            }
-//        }
-//
-//        return locals;
-        return new ArrayList<>(locals);
     }
 
     @Override
