@@ -83,7 +83,9 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
                 Object variableType = stackInfo.getStackTypes().get(i);
                 ArrayList<String> thisTypeField = fieldsByTypeLocal.get(variableType);
                 String descriptor = getDescriptor(variableType);
-                stackMappings.add(new SuspendInfo.Mapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
+                if (!descriptor.equals("T")) {
+                    stackMappings.add(new SuspendInfo.Mapping(i, new SuspendInfo.Field(thisTypeField.remove(0), descriptor)));
+                }
             }
 
             suspendInfos.add(new SuspendInfo(localVarMappings, stackMappings));

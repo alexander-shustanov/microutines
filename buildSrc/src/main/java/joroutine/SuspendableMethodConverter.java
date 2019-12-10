@@ -1,10 +1,11 @@
 package joroutine;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SuspendableMethodConverter extends MethodVisitor {
     private final ClassLoader classLoader;
@@ -19,6 +20,11 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
     int suspensionNumber = 0;
 
+    private Map<String, Integer> doubleSwapVarIndex = new HashMap<>();
+
+    int nextVarIndex;
+
+
     public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo, int access, String name, String descriptor) {
         super(Opcodes.ASM7, methodVisitor);
         this.classLoader = classLoader;
@@ -29,6 +35,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
         suspendInfos = methodInfo.getSuspendInfos();
         this.numLabels = methodInfo.getLabelCount();
         this.labelVarIndex = methodInfo.getMaxLocals();
+        nextVarIndex = labelVarIndex + 1;
 
         thisVarIndex = 0;
 
@@ -164,8 +171,23 @@ public class SuspendableMethodConverter extends MethodVisitor {
         List<SuspendInfo.Mapping> stackMappings = new ArrayList<>(suspendInfo.getStackMappings());
         Collections.reverse(stackMappings);
         for (SuspendInfo.Mapping mapping : stackMappings) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
-            super.visitInsn(Opcodes.SWAP);
+            switch (mapping.field.fieldDescriptor) {
+                case "J":
+                    super.visitVarInsn(Opcodes.LSTORE, getSwapIndex(mapping.field.fieldDescriptor));
+                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitVarInsn(Opcodes.LLOAD, getSwapIndex(mapping.field.fieldDescriptor));
+                    break;
+                case "D":
+                    super.visitVarInsn(Opcodes.DSTORE, getSwapIndex(mapping.field.fieldDescriptor));
+                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitVarInsn(Opcodes.DLOAD, getSwapIndex(mapping.field.fieldDescriptor));
+                    break;
+                default:
+                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitInsn(Opcodes.SWAP);
+                    break;
+            }
+
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
     }
@@ -182,7 +204,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
             super.visitInsn(opcode);
-        }else {
+        } else {
             super.visitInsn(opcode);
         }
     }
@@ -191,5 +213,13 @@ public class SuspendableMethodConverter extends MethodVisitor {
     public void visitMaxs(int maxStack, int maxLocals) {
         super.visitLocalVariable("label", "I", null, new Label(), new Label(), labelVarIndex);
         super.visitMaxs(maxStack, maxLocals);
+    }
+
+    private int getSwapIndex(String descriptor) {
+        if (doubleSwapVarIndex.containsKey(descriptor))
+            return doubleSwapVarIndex.get(descriptor);
+
+        doubleSwapVarIndex.put(descriptor, nextVarIndex++);
+        return doubleSwapVarIndex.get(descriptor);
     }
 }
