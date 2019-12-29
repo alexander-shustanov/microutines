@@ -3,7 +3,12 @@ package joroutine.core;
 import java.lang.reflect.Field;
 
 public interface Continuation<T> {
-    Object SUSPEND = new Object();
+    Object SUSPEND = new Object() {
+        @Override
+        public String toString() {
+            return "[SUSPEND]";
+        }
+    };
 
     T run(Object resumeWith);
 
@@ -16,13 +21,9 @@ public interface Continuation<T> {
 
             Integer l = (Integer) label.get(this);
             Integer m = (Integer) maxLabel.get(this);
-            if (l >= m) {
-                return true;
-            }
-            return false;
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            return l >= m;
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new FatalCoroutineException(e);
         }
     }
 

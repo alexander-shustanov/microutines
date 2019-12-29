@@ -66,7 +66,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
             super.visitJumpInsn(Opcodes.IF_ICMPEQ, labels[i]);
         }
 
-        doReturn();
+        suspend();
 
         super.visitLabel(startLabel);
 
@@ -93,7 +93,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
             saveFrame();
 
-            doReturn();
+            suspend();
             super.visitLabel(labels[suspensionNumber - 1]);
             restoreFrame();
             if (!voidReturn) {
@@ -104,8 +104,8 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
     }
 
-    private void doReturn() {
-        super.visitInsn(Opcodes.ACONST_NULL);
+    private void suspend() {
+        super.visitFieldInsn(Opcodes.GETSTATIC, "joroutine/core/Continuation", "SUSPEND", "Ljava/lang/Object;");
         super.visitInsn(Opcodes.ARETURN);
     }
 
@@ -198,7 +198,8 @@ public class SuspendableMethodConverter extends MethodVisitor {
             super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
-            doReturn();
+            super.visitInsn(Opcodes.ACONST_NULL);
+            super.visitInsn(Opcodes.ARETURN);
         } else if (opcode == Opcodes.ARETURN || opcode == Opcodes.DRETURN || opcode == Opcodes.LRETURN || opcode == Opcodes.FRETURN || opcode == Opcodes.IRETURN) {
             super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);

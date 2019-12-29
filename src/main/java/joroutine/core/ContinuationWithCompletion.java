@@ -14,14 +14,9 @@ public class ContinuationWithCompletion<S extends Scope, R> implements Continuat
     @Override
     public R run(Object resumeWith) {
         R result = delegate.run(resumeWith);
-        if (delegate.isDone()) {
+        if (result != Continuation.SUSPEND) {
             completion.accept(result);
         }
         return result;
-    }
-
-    @Override
-    public boolean isDone() {
-        return delegate.isDone();
     }
 }

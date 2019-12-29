@@ -1,7 +1,5 @@
 package joroutine.core;
 
-import joroutine.coroutine.CoroutineScopeImpl;
-
 import java.lang.reflect.Field;
 
 public class Magic {
