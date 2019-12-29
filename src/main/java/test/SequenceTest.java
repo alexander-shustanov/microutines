@@ -1,6 +1,6 @@
 package test;
 
-import joroutine.coroutine.BlockingContext;
+import yaroutine.coroutine.BlockingContext;
 
 public class SequenceTest {
     @SuppressWarnings("rawtypes")

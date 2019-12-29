@@ -7,13 +7,13 @@ version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
-task processYield(type: joroutine.ProcessSuspendableTask) {
+task processYield(type: yaroutine.ProcessSuspendableTask) {
     classPath = compileJava.outputs.files + compileJava.classpath
     inputs.files(compileJava.outputs.files)
 
 }
 
-task processTestYield(type: joroutine.ProcessSuspendableTask) {
+task processTestYield(type: yaroutine.ProcessSuspendableTask) {
     classPath = compileJava.outputs.files + compileTestJava.classpath
     inputs.files(compileTestJava.outputs.files)
 }
