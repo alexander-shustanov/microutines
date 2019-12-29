@@ -28,12 +28,7 @@ public class Magic {
             throw new RuntimeException(e);
         }
 
-        Continuation<R> continuation = getContinuation(suspendable);
-
-        if (scope instanceof CoroutineScopeImpl) {
-            ((CoroutineScopeImpl) scope).continuation = continuation;
-        }
-        return continuation;
+        return getContinuation(suspendable);
     }
 
     public static <R, C extends Scope> Continuation<R> getContinuation(Object suspendable) {

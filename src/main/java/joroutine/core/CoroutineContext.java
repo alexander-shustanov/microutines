@@ -1,6 +1,9 @@
-package joroutine.coroutine;
+package joroutine.core;
 
-import joroutine.core.*;
+import joroutine.coroutine.CoroutineScope;
+import joroutine.coroutine.CoroutineScopeImpl;
+import joroutine.coroutine.CoroutineSuspendable;
+import joroutine.coroutine.Dispatchers;
 
 import java.util.function.Consumer;
 
@@ -30,7 +33,6 @@ public class CoroutineContext {
         CoroutineScopeImpl scope = new CoroutineScopeImpl();
         Continuation continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation,  completion);
-        scope.continuation = wrappedContinuation;
         dispatcher.dispatch(this, wrappedContinuation);
     }
 
@@ -38,7 +40,6 @@ public class CoroutineContext {
         CoroutineScopeImpl scope = new CoroutineScopeImpl();
         Continuation continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion(continuation, o -> completion.run());
-        scope.continuation = wrappedContinuation;
         dispatcher.dispatch(this, wrappedContinuation);
     }
 

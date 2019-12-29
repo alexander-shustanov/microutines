@@ -1,7 +1,7 @@
 package joroutine.coroutine.delay;
 
 import joroutine.core.Continuation;
-import joroutine.coroutine.CoroutineContext;
+import joroutine.core.CoroutineContext;
 
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArraySet;

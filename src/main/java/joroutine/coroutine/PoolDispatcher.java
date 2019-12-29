@@ -1,5 +1,7 @@
 package joroutine.coroutine;
 
+import joroutine.core.Dispatcher;
+
 import java.util.concurrent.ExecutorService;
 
 public class PoolDispatcher extends Dispatcher {

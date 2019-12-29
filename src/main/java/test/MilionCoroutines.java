@@ -1,12 +1,5 @@
 package test;
 
-import joroutine.coroutine.CoroutineContext;
-import joroutine.coroutine.CoroutineScope;
-import joroutine.coroutine.CoroutineSuspendable;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class MilionCoroutines {} /*extends CoroutineSuspendable {
     private int numCoroutines;
     private CountDownLatch latch;

@@ -1,5 +1,6 @@
 package joroutine.coroutine;
 
+import joroutine.core.CoroutineContext;
 import joroutine.core.Scope;
 import joroutine.core.Suspend;
 import joroutine.core.SuspendableWithResult;

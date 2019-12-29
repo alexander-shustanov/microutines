@@ -4,7 +4,6 @@ import joroutine.core.SuspendableWithResult;
 import joroutine.coroutine.CoroutineScope;
 import joroutine.coroutine.CoroutineSuspendable;
 import joroutine.coroutine.Deferred;
-import org.junit.Assert;
 
 public class AwaitTest extends CoroutineSuspendable {
     @Override
@@ -18,6 +17,6 @@ public class AwaitTest extends CoroutineSuspendable {
             }
         });
 
-        System.out.println(scope.await(deferred));
+        System.out.println(deferred.await());
     }
 }

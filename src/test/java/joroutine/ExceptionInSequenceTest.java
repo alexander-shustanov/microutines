@@ -1,18 +1,18 @@
 package joroutine;
 
-import joroutine.core.Suspendable;
 import joroutine.sequence.Sequence;
 import joroutine.sequence.SequenceScope;
+import joroutine.sequence.SequenceSuspendable;
 import org.junit.Test;
 
 public class ExceptionInSequenceTest {
     @Test(expected = RuntimeException.class)
     public void theTest() {
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(100);
-                scope.yield(200);
+                yield(100);
+                yield(200);
                 throw new RuntimeException();
             }
         });
@@ -24,22 +24,22 @@ public class ExceptionInSequenceTest {
 
     @Test(expected = RuntimeException.class)
     public void anotherTest() {
-        Sequence<Integer> integers = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> integers = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(100);
-                scope.yield(200);
+                yield(100);
+                yield(200);
 
-                scope.yieldAll(new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+                yieldAll(new Sequence<>(new SequenceSuspendable<Integer>() {
                     @Override
                     public void run(SequenceScope<Integer> scope) {
-                        scope.yield(220);
-                        scope.yield(240);
+                        yield(220);
+                        yield(240);
                         throw new RuntimeException();
                     }
                 }));
 
-                scope.yield(300);
+                yield(300);
             }
         });
 

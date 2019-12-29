@@ -45,8 +45,8 @@ public class AwaitTest {
                     }
                 });
 
-                Assert.assertEquals(400, ((int) scope.await(forth)));
-                return scope.await(first) + scope.await(second) + scope.await(third);
+                Assert.assertEquals(400, ((int) forth.await()));
+                return first.await() + second.await() + third.await();
             }
         });
 
@@ -63,19 +63,36 @@ public class AwaitTest {
                     public Integer run(CoroutineScope scope) {
                         scope.delay(100);
 
-                        return scope.await(scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                        return scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
                             @Override
                             public Integer run(CoroutineScope scope) {
                                 scope.delay(100);
                                 return 200;
                             }
-                        })) + 100;
+                        }).await() + 100;
                     }
                 });
-                return scope.await(async) + 100;
+                return async.await() + 100;
             }
         });
 
         Assert.assertEquals(400, result);
+    }
+
+    @Test
+    public void singleInstruction() {
+        int integer = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+            @Override
+            public Integer run(CoroutineScope scope) {
+                return scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                    @Override
+                    public Integer run(CoroutineScope scope) {
+                        return 100;
+                    }
+                }).await();
+            }
+        });
+
+        Assert.assertEquals(100, integer);
     }
 }

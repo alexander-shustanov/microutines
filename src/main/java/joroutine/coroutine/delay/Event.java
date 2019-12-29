@@ -1,6 +1,6 @@
 package joroutine.coroutine.delay;
 
-import joroutine.coroutine.CoroutineContext;
+import joroutine.core.CoroutineContext;
 import joroutine.core.Continuation;
 
 @SuppressWarnings("rawtypes")

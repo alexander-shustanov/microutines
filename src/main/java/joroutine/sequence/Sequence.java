@@ -1,8 +1,7 @@
 package joroutine.sequence;
 
-import joroutine.core.Magic;
-import joroutine.core.Suspendable;
 import joroutine.core.Continuation;
+import joroutine.core.Magic;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -12,44 +11,44 @@ public class Sequence<T> implements Iterable<T> {
 
     Object next = STOP;
     Continuation nextStep;
-    Iterator<T> iterator;
+    Iterator<T> iterator = new Iterator<T>() {
+        @Override
+        public boolean hasNext() {
+            if (next == STOP) {
+                if (nextIterator != null) {
+                    if (nextIterator.hasNext()) {
+                        next = nextIterator.next();
+                        return true;
+                    } else {
+                        nextIterator = null;
+                    }
+                }
+                nextStep.run(null);
+                if (nextIterator != null)
+                    return hasNext();
+            }
+            return next != STOP;
+        }
+
+        @Override
+        public T next() {
+            if (next == STOP) {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+            }
+            try {
+                return ((T) next);
+            } finally {
+                next = STOP;
+            }
+        }
+    };
     Iterator<T> nextIterator;
 
-    public Sequence(Suspendable<SequenceScope<T>> suspendable) {
+    public Sequence(SequenceSuspendable<T> suspendable) {
         this.nextStep = Magic.createContinuation(suspendable, new SequenceScope<>(this));
-        this.iterator = new Iterator<T>() {
-            @Override
-            public boolean hasNext() {
-                if (next == STOP) {
-                    if (nextIterator != null) {
-                        if (nextIterator.hasNext()) {
-                            next = nextIterator.next();
-                            return true;
-                        } else {
-                            nextIterator = null;
-                        }
-                    }
-                    nextStep.run(null);
-                    if (nextIterator != null)
-                        return hasNext();
-                }
-                return next != STOP;
-            }
-
-            @Override
-            public T next() {
-                if (next == STOP) {
-                    if (!hasNext()) {
-                        throw new NoSuchElementException();
-                    }
-                }
-                try {
-                    return ((T) next);
-                } finally {
-                    next = STOP;
-                }
-            }
-        };
+        suspendable.setSequence(this);
     }
 
     @Override

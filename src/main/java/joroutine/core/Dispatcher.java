@@ -1,6 +1,4 @@
-package joroutine.coroutine;
-
-import joroutine.core.Continuation;
+package joroutine.core;
 
 @SuppressWarnings("rawtypes")
 public abstract class Dispatcher {
@@ -17,11 +15,14 @@ public abstract class Dispatcher {
     public final void dispatch(CoroutineContext context, Continuation continuation, Object resumeWith) {
         doDispatch(() -> {
             CoroutineContext saved = CoroutineContext.getCurrent();
+            Continuation savedContinuation = ContinuationHolder.getCurrent();
             context.set();
+            ContinuationHolder.set(continuation);
             try {
                 continuation.run(resumeWith);
             } finally {
                 saved.set();
+                ContinuationHolder.set(savedContinuation);
             }
         });
     }

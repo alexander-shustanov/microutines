@@ -58,12 +58,12 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         super.visitVarInsn(Opcodes.ILOAD, labelVarIndex);
         super.visitIntInsn(Opcodes.BIPUSH, 0);
-        super.visitJumpInsn(Opcodes.IF_ICMPLE, startLabel);
+        super.visitJumpInsn(Opcodes.IF_ICMPEQ, startLabel);
 
         for (int i = 0; i < numLabels; i++) {
             super.visitVarInsn(Opcodes.ILOAD, labelVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, i + 1);
-            super.visitJumpInsn(Opcodes.IF_ICMPLE, labels[i]);
+            super.visitJumpInsn(Opcodes.IF_ICMPEQ, labels[i]);
         }
 
         doReturn();

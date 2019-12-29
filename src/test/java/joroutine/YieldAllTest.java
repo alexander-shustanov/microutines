@@ -1,8 +1,8 @@
 package joroutine;
 
-import joroutine.core.Suspendable;
 import joroutine.sequence.Sequence;
 import joroutine.sequence.SequenceScope;
+import joroutine.sequence.SequenceSuspendable;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -12,22 +12,22 @@ import static org.junit.Assert.assertEquals;
 public class YieldAllTest {
     @Test
     public void testSingleLevel() {
-        Sequence<Integer> nested = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> nested = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(100);
-                scope.yield(200);
+                yield(100);
+                yield(200);
             }
         });
 
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(0);
+                yield(0);
 
-                scope.yieldAll(nested);
+                yieldAll(nested);
 
-                scope.yield(300);
+                yield(300);
             }
         });
 
@@ -39,34 +39,32 @@ public class YieldAllTest {
         assertEquals(300, (int) iterator.next());
     }
 
+    @Test
     public void testDoubleLevel() {
-
-        Sequence<Integer> inner = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> inner = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(140);
-                scope.yield(180);
+                yield(140);
+                yield(180);
             }
         });
 
 
-        Sequence<Integer> middle = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> middle = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(100);
-                scope.yieldAll(inner);
-                scope.yield(200);
+                yield(100);
+                yieldAll(inner);
+                yield(200);
             }
         });
 
-        Sequence<Integer> outer = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> outer = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(0);
-
-                scope.yieldAll(middle);
-
-                scope.yield(300);
+                yield(0);
+                yieldAll(middle);
+                yield(300);
             }
         });
 

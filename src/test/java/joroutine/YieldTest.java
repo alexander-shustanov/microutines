@@ -3,6 +3,7 @@ package joroutine;
 import joroutine.core.Suspendable;
 import joroutine.sequence.Sequence;
 import joroutine.sequence.SequenceScope;
+import joroutine.sequence.SequenceSuspendable;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
@@ -20,12 +22,12 @@ import static org.junit.Assert.assertFalse;
 public class YieldTest {
     @Test
     public void testIntSequence() {
-        Sequence<Integer> sequence = new Sequence<Integer>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<Integer>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(10);
-                scope.yield(20);
-                scope.yield(30);
+                yield(10);
+                yield(20);
+                yield(30);
             }
         });
 
@@ -43,11 +45,11 @@ public class YieldTest {
     public void testOuterData() {
         AtomicInteger next = new AtomicInteger(100);
         AtomicBoolean end = new AtomicBoolean(false);
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
                 while (!end.get()) {
-                    scope.yield(next.get());
+                    yield(next.get());
                 }
             }
         });
@@ -69,24 +71,24 @@ public class YieldTest {
 
     @Test
     public void testNested() {
-        Sequence<Integer> sequence = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                Sequence<Integer> nested = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+                Sequence<Integer> nested = new Sequence<>(new SequenceSuspendable<Integer>() {
                     @Override
                     public void run(SequenceScope<Integer> scope) {
-                        scope.yield(100);
-                        scope.yield(200);
+                        yield(100);
+                        yield(200);
                     }
                 });
 
-                scope.yield(0);
+                yield(0);
 
                 for (Integer integer : nested) {
-                    scope.yield(integer);
+                    yield(integer);
                 }
 
-                scope.yield(300);
+                yield(300);
             }
         });
 
@@ -100,12 +102,12 @@ public class YieldTest {
 
     @Test
     public void stream() {
-        Sequence<Integer> integers = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
+        Sequence<Integer> integers = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
-                scope.yield(100);
-                scope.yield(200);
-                scope.yield(300);
+                yield(100);
+                yield(200);
+                yield(300);
             }
         });
 
@@ -116,5 +118,51 @@ public class YieldTest {
         assertEquals(200, ((int) list.get(0)));
         assertEquals(400, ((int) list.get(1)));
         assertEquals(600, ((int) list.get(2)));
+    }
+
+    @Test
+    public void sequenceSuspendable() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
+            @Override
+            public void run(SequenceScope<Integer> scope) {
+                yield(100);
+                yield(200);
+                yield(300);
+            }
+        });
+
+        List<Integer> list = new ArrayList<>();
+        for (Integer integer : sequence) {
+            list.add(integer);
+        }
+
+        assertEquals(100, (int) list.get(0));
+        assertEquals(200, (int) list.get(1));
+        assertEquals(300, (int) list.get(2));
+    }
+
+    @Test
+    public void fibonacci() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
+            @Override
+            public void run(SequenceScope<Integer> scope) {
+                yield(1);
+                yield(1);
+                int cur = 1;
+                int prev = 1;
+                while (true) {
+                    int tmp = prev;
+                    prev = cur;
+                    cur += tmp;
+                    yield(cur);
+                }
+            }
+        });
+
+        //noinspection OptionalGetWithoutIsPresent
+        Integer tenthFibonacci = Stream.generate(sequence.iterator()::next)
+                .skip(9).findFirst().get();
+
+        assertEquals(55, ((int) tenthFibonacci));
     }
 }

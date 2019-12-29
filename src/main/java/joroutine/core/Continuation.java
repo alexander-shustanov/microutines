@@ -25,4 +25,9 @@ public interface Continuation<T> {
             throw new RuntimeException(e);
         }
     }
+
+    static <T> Continuation<T> getCurrent() {
+        //noinspection unchecked
+        return ContinuationHolder.getCurrent();
+    }
 }
