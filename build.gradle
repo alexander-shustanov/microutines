@@ -1,19 +1,21 @@
+import microutine.ProcessSuspendableTask
+
 plugins {
     id 'java'
 }
 
-group 'org.example'
+group 'microutines'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
-task processYield(type: yaroutine.ProcessSuspendableTask) {
+task processYield(type: ProcessSuspendableTask) {
     classPath = compileJava.outputs.files + compileJava.classpath
     inputs.files(compileJava.outputs.files)
 
 }
 
-task processTestYield(type: yaroutine.ProcessSuspendableTask) {
+task processTestYield(type: ProcessSuspendableTask) {
     classPath = compileJava.outputs.files + compileTestJava.classpath
     inputs.files(compileTestJava.outputs.files)
 }

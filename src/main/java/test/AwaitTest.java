@@ -1,9 +1,9 @@
 package test;
 
-import yaroutine.core.SuspendableWithResult;
-import yaroutine.coroutine.CoroutineScope;
-import yaroutine.coroutine.CoroutineSuspendable;
-import yaroutine.coroutine.Deferred;
+import microutine.core.SuspendableWithResult;
+import microutine.coroutine.CoroutineScope;
+import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.Deferred;
 
 public class AwaitTest extends CoroutineSuspendable {
     @Override
