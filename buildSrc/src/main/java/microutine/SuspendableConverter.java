@@ -105,7 +105,7 @@ public class SuspendableConverter {
                         super.visitField(Opcodes.ACC_PRIVATE, field.fieldName, field.fieldDescriptor, null, null);
                 }
 
-                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, "label$S$S", "I", null, null);
+                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, SuspendableMethodConverter.LABEL_FIELD_NAME, "I", null, null);
                 super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC, "maxLabel$S$S", "I", null, suspendableInfo.getLabelCount() + 1);
 
                 super.visitEnd();

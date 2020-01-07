@@ -9,13 +9,14 @@ import java.util.*;
 
 public class SuspendableMethodConverter extends MethodVisitor {
     private static final int RESUME_WITH_PARAMETER = 1;
+    private static final int THIS_VAR_INDEX = 0;
+    public static final String LABEL_FIELD_NAME = "label$S$S";
 
     private final ClassLoader classLoader;
     private final int numLabels;
     private final Label[] labels;
     private final String myClassJvmName;
     private final int labelVarIndex;
-    private final int thisVarIndex;
     private final List<SuspendInfo> suspendInfos;
 
     private SuspendableInfoMethodCollector methodInfo;
@@ -39,9 +40,6 @@ public class SuspendableMethodConverter extends MethodVisitor {
         this.labelVarIndex = methodInfo.getMaxLocals();
         nextVarIndex = labelVarIndex + 1;
 
-        thisVarIndex = 0;
-
-
         labels = new Label[numLabels];
         for (int i = 0; i < numLabels; i++) {
             labels[i] = new Label();
@@ -54,8 +52,8 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
         Label startLabel = new Label();
 
-        super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
-        super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, "label$S$S", "I");
+        super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
+        super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, LABEL_FIELD_NAME, "I");
         super.visitVarInsn(Opcodes.ISTORE, labelVarIndex);
 
         super.visitVarInsn(Opcodes.ILOAD, labelVarIndex);
@@ -68,8 +66,10 @@ public class SuspendableMethodConverter extends MethodVisitor {
             super.visitJumpInsn(Opcodes.IF_ICMPEQ, labels[i]);
         }
 
-        super.visitInsn(Opcodes.ACONST_NULL);
-        super.visitInsn(Opcodes.ARETURN);
+        super.visitTypeInsn(Opcodes.NEW, "microutine/core/ContinuationEndException");
+        super.visitInsn(Opcodes.DUP);
+        super.visitMethodInsn(Opcodes.INVOKESPECIAL, "microutine/core/ContinuationEndException", "<init>", "()V", false);
+        super.visitInsn(Opcodes.ATHROW);
 
         super.visitLabel(startLabel);
 
@@ -89,9 +89,9 @@ public class SuspendableMethodConverter extends MethodVisitor {
                 super.visitInsn(Opcodes.POP);
             }
 
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitIntInsn(Opcodes.BIPUSH, suspensionNumber);
-            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, LABEL_FIELD_NAME, "I");
 
             saveFrame();
 
@@ -103,7 +103,6 @@ public class SuspendableMethodConverter extends MethodVisitor {
             }
             suspensionNumber++;
         }
-
     }
 
     private void suspend() {
@@ -114,10 +113,10 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private void restoreFrame() {
         SuspendInfo suspendInfo = suspendInfos.get(suspensionNumber);
         for (SuspendInfo.Mapping mapping : suspendInfo.getVariableMappings()) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
 
-            int opcode = Opcodes.ASTORE;
+            int opcode;
             switch (mapping.field.fieldDescriptor) {
                 case "I":
                 case "Z":
@@ -134,12 +133,15 @@ public class SuspendableMethodConverter extends MethodVisitor {
                 case "D":
                     opcode = Opcodes.DSTORE;
                     break;
+                default:
+                    opcode = Opcodes.ASTORE;
+                    break;
             }
             super.visitVarInsn(opcode, mapping.index);
         }
 
         for (SuspendInfo.Mapping mapping : suspendInfo.getStackMappings()) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitFieldInsn(Opcodes.GETFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
     }
@@ -147,7 +149,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private void saveFrame() {
         SuspendInfo suspendInfo = suspendInfos.get(suspensionNumber);
         for (SuspendInfo.Mapping mapping : suspendInfo.getVariableMappings()) {
-            int opcode = Opcodes.ALOAD;
+            int opcode;
             switch (mapping.field.fieldDescriptor) {
                 case "I":
                 case "Z":
@@ -164,8 +166,11 @@ public class SuspendableMethodConverter extends MethodVisitor {
                 case "D":
                     opcode = Opcodes.DLOAD;
                     break;
+                default:
+                    opcode = Opcodes.ALOAD;
+                    break;
             }
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitVarInsn(opcode, mapping.index);
             super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, mapping.field.fieldName, mapping.field.fieldDescriptor);
         }
@@ -176,16 +181,16 @@ public class SuspendableMethodConverter extends MethodVisitor {
             switch (mapping.field.fieldDescriptor) {
                 case "J":
                     super.visitVarInsn(Opcodes.LSTORE, getSwapIndex(mapping.field.fieldDescriptor));
-                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
                     super.visitVarInsn(Opcodes.LLOAD, getSwapIndex(mapping.field.fieldDescriptor));
                     break;
                 case "D":
                     super.visitVarInsn(Opcodes.DSTORE, getSwapIndex(mapping.field.fieldDescriptor));
-                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
                     super.visitVarInsn(Opcodes.DLOAD, getSwapIndex(mapping.field.fieldDescriptor));
                     break;
                 default:
-                    super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+                    super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
                     super.visitInsn(Opcodes.SWAP);
                     break;
             }
@@ -197,15 +202,15 @@ public class SuspendableMethodConverter extends MethodVisitor {
     @Override
     public void visitInsn(int opcode) {
         if (opcode == Opcodes.RETURN) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
-            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, LABEL_FIELD_NAME, "I");
             super.visitInsn(Opcodes.ACONST_NULL);
             super.visitInsn(Opcodes.ARETURN);
         } else if (opcode == Opcodes.ARETURN || opcode == Opcodes.DRETURN || opcode == Opcodes.LRETURN || opcode == Opcodes.FRETURN || opcode == Opcodes.IRETURN) {
-            super.visitVarInsn(Opcodes.ALOAD, thisVarIndex);
+            super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
             super.visitIntInsn(Opcodes.BIPUSH, methodInfo.getLabelCount() + 1);
-            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, "label$S$S", "I");
+            super.visitFieldInsn(Opcodes.PUTFIELD, myClassJvmName, LABEL_FIELD_NAME, "I");
             super.visitInsn(opcode);
         } else {
             super.visitInsn(opcode);
