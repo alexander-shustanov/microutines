@@ -19,7 +19,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     private final int labelVarIndex;
     private final List<SuspendInfo> suspendInfos;
 
-    private SuspendableInfoMethodCollector methodInfo;
+    private SuspendInfoCollector methodInfo;
 
     int suspensionNumber = 0;
 
@@ -28,7 +28,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
     int nextVarIndex;
 
 
-    public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendableInfoMethodCollector methodInfo) {
+    public SuspendableMethodConverter(ClassLoader classLoader, Class<?> currentClass, MethodVisitor methodVisitor, SuspendInfoCollector methodInfo) {
         super(Opcodes.ASM7, methodVisitor);
         this.classLoader = classLoader;
         this.methodInfo = methodInfo;

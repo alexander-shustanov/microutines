@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
+public class SuspendInfoCollector extends AnalyzerAdapter {
     @SuppressWarnings("SpellCheckingInspection")
     private static final char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
 
@@ -28,14 +28,14 @@ public class SuspendableInfoMethodCollector extends AnalyzerAdapter {
     private int maxLocals;
     private ClassLoader classLoader;
 
-    public SuspendableInfoMethodCollector(ClassLoader classLoader, String owner, int access,
-                                          String name, String desc) {
+    public SuspendInfoCollector(ClassLoader classLoader, String owner, int access,
+                                String name, String desc) {
         this(classLoader, owner, access, name, desc, new MethodVisitor(Opcodes.ASM7) {
         });
     }
 
-    public SuspendableInfoMethodCollector(ClassLoader classLoader, String owner, int access,
-                                          String name, String desc, MethodVisitor methodVisitor) {
+    public SuspendInfoCollector(ClassLoader classLoader, String owner, int access,
+                                String name, String desc, MethodVisitor methodVisitor) {
         super(Opcodes.ASM7, owner, access, name, desc, methodVisitor);
         this.classLoader = classLoader;
     }

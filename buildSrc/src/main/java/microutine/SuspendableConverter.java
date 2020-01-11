@@ -67,7 +67,7 @@ public class SuspendableConverter {
             }
         });
 
-        SuspendableInfoMethodCollector suspendableInfo = new SuspendableInfoMethodCollector(classLoader, runMethod.getDeclaringClass().getName(), method.access, method.name, method.desc);
+        SuspendInfoCollector suspendableInfo = new SuspendInfoCollector(classLoader, runMethod.getDeclaringClass().getName(), method.access, method.name, method.desc);
         method.accept(suspendableInfo);
 
         MethodNode resultMethod = newMethodFrom(method);
