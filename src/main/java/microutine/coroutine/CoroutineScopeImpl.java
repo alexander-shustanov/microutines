@@ -1,17 +1,21 @@
 package microutine.coroutine;
 
-import microutine.core.Continuation;
-import microutine.core.CoroutineContext;
-import microutine.core.Suspend;
-import microutine.core.SuspendableWithResult;
+import microutine.core.*;
 import microutine.coroutine.delay.Delay;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import static microutine.core.CoroutineContext.getCurrent;
 
 @SuppressWarnings("rawtypes")
 public class CoroutineScopeImpl implements CoroutineScope {
+
+
+
+    public CoroutineScopeImpl() {
+    }
+
     @Override
     @Suspend
     public void delay(long millis) {
@@ -19,35 +23,30 @@ public class CoroutineScopeImpl implements CoroutineScope {
     }
 
     @Override
-    @Suspend
-    public <R> R await(Deferred<R> deferred) {
-        CoroutineContext myContext = getCurrent();
-        Continuation<Object> myContinuation = Continuation.getCurrent();
-
-        synchronized (deferred) {
-            if (deferred.isDone()) {
-                myContext.getDispatcher().dispatch(myContext, myContinuation, deferred.getValue());
-                return (R) Continuation.SUSPEND;
-            }
-            deferred.addWaiter(r -> {
-                myContext.getDispatcher().dispatch(myContext, myContinuation, r);
-            });
-
-            return (R) Continuation.SUSPEND;
-        }
-    }
-
-    @Override
     public <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable) {
         Deferred<R> deferred = new Deferred<>();
-        context.launch(suspendable, deferred::accept);
+        launch(context, suspendable, deferred::accept);
         return deferred;
     }
 
     @Override
     public void await(CountDownLatch latch) {
         CoroutineContext context = getCurrent();
-        context.launch(createLatchChecker(latch, context, Continuation.getCurrent()));
+        launch(getCurrent(), createLatchChecker(latch, context, Continuation.getCurrent()));
+    }
+
+    private <R> void launch(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable, Consumer<R> completion) {
+        CoroutineScopeImpl scope = new CoroutineScopeImpl();
+        Continuation<R> continuation = Magic.createContinuation(suspendable, scope);
+        ContinuationWithCompletion<R> wrappedContinuation = new ContinuationWithCompletion<>(continuation, completion);
+        context.getDispatcher().dispatch(context, wrappedContinuation);
+    }
+
+    @Override
+    public void launch(CoroutineContext context, CoroutineSuspendable suspendable) {
+        CoroutineScopeImpl scope = new CoroutineScopeImpl();
+        Continuation continuation = Magic.createContinuation(suspendable, scope);
+        context.getDispatcher().dispatch(context, continuation);
     }
 
     private CoroutineSuspendable createLatchChecker(CountDownLatch latch, CoroutineContext context, Continuation continuation) {
@@ -57,20 +56,9 @@ public class CoroutineScopeImpl implements CoroutineScope {
                 if (latch.getCount() == 0) {
                     context.getDispatcher().dispatch(context, continuation);
                 } else {
-                    context.launch(createLatchChecker(latch, context, continuation));
+                    launch(context, createLatchChecker(latch, context, continuation));
                 }
             }
         };
-    }
-
-    @Suspend
-    @Override
-    public void launchAwait(CoroutineContext context, CoroutineSuspendable suspendable) {
-        CoroutineContext currentContext = getCurrent();
-        Continuation<Object> myContinuation = Continuation.getCurrent();
-
-        context.launch(suspendable, () -> {
-            currentContext.getDispatcher().dispatch(currentContext, myContinuation);
-        });
     }
 }

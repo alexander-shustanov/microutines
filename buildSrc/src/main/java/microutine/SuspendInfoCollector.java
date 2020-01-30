@@ -19,7 +19,7 @@ public class SuspendInfoCollector extends AnalyzerAdapter {
         int f = index / chars.length;
         int s = index % chars.length;
 
-        return String.copyValueOf(new char[]{chars[s], chars[f]});
+        return String.copyValueOf(new char[]{chars[f], chars[s]});
     }
 
     private int count = 0;

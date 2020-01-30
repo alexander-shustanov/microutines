@@ -1,16 +1,18 @@
 package microutine;
 
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.BlockingContext;
 import microutine.coroutine.CoroutineScope;
+import microutine.coroutine.CoroutineSuspendable;
 import microutine.coroutine.Deferred;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static microutine.coroutine.CoroutineScope.runBlocking;
+
 public class AwaitTest {
     @Test
     public void testAwait() {
-        int result = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
             @Override
             public Integer run(CoroutineScope scope) {
                 Deferred<Integer> first = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
@@ -55,7 +57,7 @@ public class AwaitTest {
 
     @Test
     public void testNestedAwait() {
-        int result = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
             @Override
             public Integer run(CoroutineScope scope) {
                 Deferred<Integer> async = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
@@ -81,7 +83,7 @@ public class AwaitTest {
 
     @Test
     public void singleInstruction() {
-        int integer = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int integer = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
             @Override
             public Integer run(CoroutineScope scope) {
                 return scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
@@ -94,5 +96,31 @@ public class AwaitTest {
         });
 
         Assert.assertEquals(100, integer);
+    }
+
+    @Test
+    public void orderTest() {
+        runBlocking(new CoroutineSuspendable() {
+            @Override
+            public void run(CoroutineScope scope) {
+                Deferred<String> customer = scope.async(new SuspendableWithResult<CoroutineScope, String>() {
+                    @Override
+                    public String run(CoroutineScope scope) {
+                        scope.delay(1000);
+                        return "Alex";
+                    }
+                });
+
+                Deferred<String> product = scope.async(new SuspendableWithResult<CoroutineScope, String>() {
+                    @Override
+                    public String run(CoroutineScope scope) {
+                        scope.delay(1000);
+                        return "Bread";
+                    }
+                });
+
+                System.out.println(customer.await() + " orders " + product.await());
+            }
+        });
     }
 }

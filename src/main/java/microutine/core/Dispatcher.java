@@ -19,7 +19,9 @@ public abstract class Dispatcher {
             context.set();
             ContinuationHolder.set(continuation);
             try {
-                continuation.run(resumeWith);
+                synchronized (continuation) {
+                    continuation.run(resumeWith);
+                }
             } finally {
                 saved.set();
                 ContinuationHolder.set(savedContinuation);

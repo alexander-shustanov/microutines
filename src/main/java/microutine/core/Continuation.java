@@ -10,6 +10,11 @@ public interface Continuation<T> {
         }
     };
 
+    static <R> R getSuspend() {
+        //noinspection unchecked
+        return (R) SUSPEND;
+    }
+
     T run(Object resumeWith);
 
     default boolean isDone() {

@@ -4,31 +4,26 @@ import microutine.core.Continuation;
 import microutine.core.CoroutineContext;
 import microutine.core.Suspend;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import static microutine.core.CoroutineContext.getCurrent;
 
 public class Deferred<T> {
-    private List<Consumer<T>> waiters = new ArrayList<>();
+    private Runnable waiter;
 
     private volatile T value = null;
     private volatile boolean done = false;
 
     public void accept(T value) {
+        Runnable waiter;
+
         synchronized (this) {
             this.value = value;
             done = true;
 
-            for (Consumer<T> waiter : waiters) {
-                waiter.accept(value);
-            }
+            waiter = this.waiter;
         }
-    }
 
-    public void addWaiter(Consumer<T> waiter) {
-        waiters.add(waiter);
+        if (waiter != null)
+            waiter.run();
     }
 
     public boolean isDone() {
@@ -46,14 +41,11 @@ public class Deferred<T> {
 
         synchronized (this) {
             if (isDone()) {
-                myContext.getDispatcher().dispatch(myContext, myContinuation, getValue());
-                return (T) Continuation.SUSPEND;
+                return getValue();
             }
-            addWaiter(r -> {
-                myContext.getDispatcher().dispatch(myContext, myContinuation, r);
-            });
+            waiter = () -> myContext.getDispatcher().dispatch(myContext, myContinuation, getValue());
 
-            return (T) Continuation.SUSPEND;
+            return Continuation.getSuspend();
         }
     }
 }

@@ -4,7 +4,6 @@ import microutine.channels.BlockingChannel;
 import microutine.channels.InputChannel;
 import microutine.channels.OutputChannel;
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.BlockingContext;
 import microutine.coroutine.CoroutineScope;
 import microutine.coroutine.CoroutineSuspendable;
 import microutine.coroutine.Deferred;
@@ -14,7 +13,7 @@ import org.junit.Test;
 public class ChannelTest {
     @Test
     public void channel() {
-        int result = BlockingContext.INSTANCE.launch(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = CoroutineScope.runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
             @Override
             public Integer run(CoroutineScope scope) {
                 BlockingChannel<Integer> channel = new BlockingChannel<>();

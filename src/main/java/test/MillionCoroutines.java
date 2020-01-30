@@ -1,10 +1,16 @@
 package test;
 
-public class MilionCoroutines {} /*extends CoroutineSuspendable {
+import microutine.coroutine.CoroutineScope;
+import microutine.coroutine.CoroutineSuspendable;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class MillionCoroutines extends CoroutineSuspendable {
     private int numCoroutines;
     private CountDownLatch latch;
 
-    public MilionCoroutines(int numCoroutines) {
+    public MillionCoroutines(int numCoroutines) {
         this.numCoroutines = numCoroutines;
         this.latch = new CountDownLatch(numCoroutines);
     }
@@ -20,7 +26,7 @@ public class MilionCoroutines {} /*extends CoroutineSuspendable {
         AtomicInteger atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < numCoroutines; i++) {
-            scope.launch(CoroutineContext.EMPTY, new CoroutineSuspendable() {
+            scope.launch(new CoroutineSuspendable() {
                 @Override
                 public void run(CoroutineScope scope) {
                     scope.delay(500);
@@ -38,13 +44,7 @@ public class MilionCoroutines {} /*extends CoroutineSuspendable {
 
         System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
 
-        scope.launchAwait(CoroutineContext.EMPTY, new CoroutineSuspendable() {
-            @Override
-            public void run(CoroutineScope scope) {
-                scope.delay(1000);
-                System.out.println("World");
-            }
-        });
+        scope.delay(1000);
+        System.out.println("World");
     }
 }
-*/

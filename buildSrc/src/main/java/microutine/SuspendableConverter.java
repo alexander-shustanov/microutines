@@ -48,7 +48,10 @@ public class SuspendableConverter {
                 .orElseThrow(() -> new RuntimeException("Unable to find method to convert"));
         method.signature = null;
 
-        method.localVariables.removeIf(localVariableNode -> localVariableNode.index != 0);
+        method.localVariables.forEach(localVariableNode -> {
+            if (localVariableNode.index > 0)
+                localVariableNode.index++;
+        });
         method.desc = method.desc.replace("(", "(Ljava/lang/Object;");
         method.maxLocals++;
         method.instructions.forEach(node -> {
@@ -102,10 +105,10 @@ public class SuspendableConverter {
 
                 for (SuspendInfo.Field field : fields) {
                     if (!field.fieldDescriptor.equals("T"))
-                        super.visitField(Opcodes.ACC_PRIVATE, field.fieldName, field.fieldDescriptor, null, null);
+                        super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_VOLATILE, field.fieldName, field.fieldDescriptor, null, null);
                 }
 
-                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, SuspendableMethodConverter.LABEL_FIELD_NAME, "I", null, null);
+                super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_VOLATILE, SuspendableMethodConverter.LABEL_FIELD_NAME, "I", null, null);
                 super.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC, "maxLabel$S$S", "I", null, suspendableInfo.getLabelCount() + 1);
 
                 super.visitEnd();

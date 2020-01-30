@@ -14,7 +14,8 @@ public class SuspendableMethodConverter extends MethodVisitor {
 
     private final ClassLoader classLoader;
     private final int numLabels;
-    private final Label[] labels;
+    private final Label[] restoreLabels;
+    private final Label[] codeLabels;
     private final String myClassJvmName;
     private final int labelVarIndex;
     private final List<SuspendInfo> suspendInfos;
@@ -40,9 +41,14 @@ public class SuspendableMethodConverter extends MethodVisitor {
         this.labelVarIndex = methodInfo.getMaxLocals();
         nextVarIndex = labelVarIndex + 1;
 
-        labels = new Label[numLabels];
+        restoreLabels = new Label[numLabels];
         for (int i = 0; i < numLabels; i++) {
-            labels[i] = new Label();
+            restoreLabels[i] = new Label();
+        }
+
+        codeLabels = new Label[numLabels];
+        for (int i = 0; i < numLabels; i++) {
+            codeLabels[i] = new Label();
         }
     }
 
@@ -63,7 +69,7 @@ public class SuspendableMethodConverter extends MethodVisitor {
         for (int i = 0; i < numLabels; i++) {
             super.visitVarInsn(Opcodes.ILOAD, labelVarIndex);
             super.visitIntInsn(Opcodes.BIPUSH, i + 1);
-            super.visitJumpInsn(Opcodes.IF_ICMPEQ, labels[i]);
+            super.visitJumpInsn(Opcodes.IF_ICMPEQ, restoreLabels[i]);
         }
 
         super.visitTypeInsn(Opcodes.NEW, "microutine/core/ContinuationEndException");
@@ -86,7 +92,10 @@ public class SuspendableMethodConverter extends MethodVisitor {
             boolean voidReturn = Type.getReturnType(descriptor) == Type.VOID_TYPE;
 
             if (!voidReturn) {
-                super.visitInsn(Opcodes.POP);
+                super.visitVarInsn(Opcodes.ASTORE, RESUME_WITH_PARAMETER);
+                super.visitVarInsn(Opcodes.ALOAD, RESUME_WITH_PARAMETER);
+                super.visitFieldInsn(Opcodes.GETSTATIC, "microutine/core/Continuation", "SUSPEND", "Ljava/lang/Object;");
+                super.visitJumpInsn(Opcodes.IF_ACMPNE, codeLabels[suspensionNumber - 1]);
             }
 
             super.visitVarInsn(Opcodes.ALOAD, THIS_VAR_INDEX);
@@ -96,8 +105,10 @@ public class SuspendableMethodConverter extends MethodVisitor {
             saveFrame();
 
             suspend();
-            super.visitLabel(labels[suspensionNumber - 1]);
+            super.visitLabel(restoreLabels[suspensionNumber - 1]);
             restoreFrame();
+
+            super.visitLabel(codeLabels[suspensionNumber - 1]);
             if (!voidReturn) {
                 super.visitVarInsn(Opcodes.ALOAD, RESUME_WITH_PARAMETER);
             }

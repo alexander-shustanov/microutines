@@ -1,15 +1,11 @@
 package test;
 
-import microutine.coroutine.BlockingContext;
+import microutine.coroutine.CoroutineScope;
 
 public class SequenceTest {
     @SuppressWarnings("rawtypes")
     public static void main(String[] args) {
-//        BlockingContext.INSTANCE.launch(new MilionCoroutines(2_000_000));
-
-
-        BlockingContext.INSTANCE.launch(new AwaitTest());
-
+        CoroutineScope.runBlocking(new AwaitTest());
         System.exit(0);
     }
 }

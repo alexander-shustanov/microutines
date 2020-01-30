@@ -2,7 +2,7 @@ package microutine.core;
 
 import java.util.function.Consumer;
 
-public class ContinuationWithCompletion<S extends Scope, R> implements Continuation<R> {
+public class ContinuationWithCompletion<R> implements Continuation<R> {
     private final Continuation<R> delegate;
     private final Consumer<R> completion;
 

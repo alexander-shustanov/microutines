@@ -146,13 +146,16 @@ public class YieldTest {
             public void run(SequenceScope<Integer> scope) {
                 yield(1);
                 yield(1);
-                int cur = 1;
-                int prev = 1;
+
+                int a = 1;
+                int b = 1;
+
                 while (true) {
-                    int tmp = prev;
-                    prev = cur;
-                    cur += tmp;
-                    yield(cur);
+                    b += a;
+                    yield(b);
+
+                    a += b;
+                    yield(a);
                 }
             }
         });
