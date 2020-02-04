@@ -1,7 +1,9 @@
 package microutine.core;
 
-public abstract class Suspendable<C extends Scope> {
-    abstract public void run(C scope);
+import java.io.IOException;
+
+public abstract class Suspendable<C extends CoroutineScope> {
+    abstract public void run(C scope) throws IOException;
 }
 
 

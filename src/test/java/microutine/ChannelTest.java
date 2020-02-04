@@ -4,8 +4,8 @@ import microutine.channels.BlockingChannel;
 import microutine.channels.InputChannel;
 import microutine.channels.OutputChannel;
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.CoroutineScope;
-import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.AsyncScope;
+import microutine.coroutine.AsyncSuspendable;
 import microutine.coroutine.Deferred;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,14 +13,14 @@ import org.junit.Test;
 public class ChannelTest {
     @Test
     public void channel() {
-        int result = CoroutineScope.runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = AsyncScope.runBlocking(new SuspendableWithResult<AsyncScope, Integer>() {
             @Override
-            public Integer run(CoroutineScope scope) {
+            public Integer run(AsyncScope scope) {
                 BlockingChannel<Integer> channel = new BlockingChannel<>();
 
-                Deferred<Integer> result = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                Deferred<Integer> result = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         InputChannel<Integer> inputChannel = channel.getInputChannel();
 
                         Integer state = 0;
@@ -33,9 +33,9 @@ public class ChannelTest {
                     }
                 });
 
-                scope.launch(new CoroutineSuspendable() {
+                scope.launch(new AsyncSuspendable() {
                     @Override
-                    public void run(CoroutineScope scope) {
+                    public void run(AsyncScope scope) {
                         OutputChannel<Integer> outputChannel = channel.getOutputChannel();
 
                         for (int i = 0; i < 10; i++) {

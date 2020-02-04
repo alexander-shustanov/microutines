@@ -1,9 +1,9 @@
 package microutine.sequence;
 
+import microutine.core.CoroutineScope;
 import microutine.core.Suspend;
-import microutine.core.Scope;
 
-public class SequenceScope<T> implements Scope {
+public class SequenceScope<T> implements CoroutineScope {
     private Sequence<T> sequence;
 
     public SequenceScope(Sequence<T> sequence) {

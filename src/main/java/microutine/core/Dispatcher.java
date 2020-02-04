@@ -15,16 +15,16 @@ public abstract class Dispatcher {
     public final void dispatch(CoroutineContext context, Continuation continuation, Object resumeWith) {
         doDispatch(() -> {
             CoroutineContext saved = CoroutineContext.getCurrent();
-            Continuation savedContinuation = ContinuationHolder.getCurrent();
+            Continuation savedContinuation = CoroutineHolder.getContinuation();
             context.set();
-            ContinuationHolder.set(continuation);
+            CoroutineHolder.set(continuation);
             try {
                 synchronized (continuation) {
                     continuation.run(resumeWith);
                 }
             } finally {
                 saved.set();
-                ContinuationHolder.set(savedContinuation);
+                CoroutineHolder.set(savedContinuation);
             }
         });
     }

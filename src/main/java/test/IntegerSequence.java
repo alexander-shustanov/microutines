@@ -1,29 +1,15 @@
 package test;
 
-public class IntegerSequence{}/* extends Suspendable<SequenceScope<Integer>> {
+import microutine.sequence.Sequence;
+import microutine.sequence.SequenceScope;
+import microutine.sequence.SequenceSuspendable;
+
+public class IntegerSequence extends SequenceSuspendable<Integer> {
 
     @Override
     public void run(SequenceScope<Integer> scope) {
-        int i = 0;
-
-        Sequence<Integer> nested = new Sequence<>(new Suspendable<SequenceScope<Integer>>() {
-            @Override
-            public void run(SequenceScope<Integer> scope) {
-                scope.yield(11);
-                scope.yield(50);
-            }
-        });
-
-        for (Integer integer : nested) {
-            scope.yield(integer * 2);
-            scope.yield(integer * 4);
-        }
-
-        for (; i < 100; i++) {
-            scope.yield(i += 10);
-            scope.yield(i += 10);
-            scope.yield(i += 10);
-        }
-        scope.yield(i += 10);
+        scope.yield(10);
+        scope.yield(20);
+        scope.yield(30);
     }
-}*/
+}

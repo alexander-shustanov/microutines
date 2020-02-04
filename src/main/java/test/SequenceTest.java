@@ -1,11 +1,11 @@
 package test;
 
-import microutine.coroutine.CoroutineScope;
+import microutine.coroutine.AsyncScope;
 
 public class SequenceTest {
     @SuppressWarnings("rawtypes")
     public static void main(String[] args) {
-        CoroutineScope.runBlocking(new AwaitTest());
+        AsyncScope.runBlocking(new AwaitTest());
         System.exit(0);
     }
 }

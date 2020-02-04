@@ -34,6 +34,6 @@ public interface Continuation<T> {
 
     static <T> Continuation<T> getCurrent() {
         //noinspection unchecked
-        return ContinuationHolder.getCurrent();
+        return CoroutineHolder.getContinuation();
     }
 }

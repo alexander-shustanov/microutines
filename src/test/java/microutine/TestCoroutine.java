@@ -1,8 +1,8 @@
 package microutine;
 
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.CoroutineScope;
-import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.AsyncScope;
+import microutine.coroutine.AsyncSuspendable;
 import microutine.coroutine.Deferred;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,17 +19,17 @@ public class TestCoroutine {
 
         AtomicInteger counter = new AtomicInteger(0);
 
-        CoroutineScope.runBlocking(new CoroutineSuspendable() {
+        AsyncScope.runBlocking(new AsyncSuspendable() {
             @Override
-            public void run(CoroutineScope scope) {
+            public void run(AsyncScope scope) {
                 long startTime = System.currentTimeMillis();
 
                 CountDownLatch latch = new CountDownLatch(million);
 
                 for (int i = 0; i < million; i++) {
-                    scope.launch(new CoroutineSuspendable() {
+                    scope.launch(new AsyncSuspendable() {
                         @Override
-                        public void run(CoroutineScope scope) {
+                        public void run(AsyncScope scope) {
                             scope.delay(1000);
 
                             counter.incrementAndGet();
@@ -53,9 +53,9 @@ public class TestCoroutine {
 
             int million = 1_000_000;
 
-            CoroutineScope.runBlocking(new CoroutineSuspendable() {
+            AsyncScope.runBlocking(new AsyncSuspendable() {
                 @Override
-                public void run(CoroutineScope scope) {
+                public void run(AsyncScope scope) {
                     long startTime = System.currentTimeMillis();
                     long sum = 0;
 
@@ -77,10 +77,10 @@ public class TestCoroutine {
         }
     }
 
-    private SuspendableWithResult<CoroutineScope, Long> createIthAsync(int i) {
-        return new SuspendableWithResult<CoroutineScope, Long>() {
+    private SuspendableWithResult<AsyncScope, Long> createIthAsync(int i) {
+        return new SuspendableWithResult<AsyncScope, Long>() {
             @Override
-            public Long run(CoroutineScope scope) {
+            public Long run(AsyncScope scope) {
                 scope.delay(1000);
                 return ((long) i);
             }

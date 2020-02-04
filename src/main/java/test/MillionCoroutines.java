@@ -1,12 +1,12 @@
 package test;
 
-import microutine.coroutine.CoroutineScope;
-import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.AsyncScope;
+import microutine.coroutine.AsyncSuspendable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MillionCoroutines extends CoroutineSuspendable {
+public class MillionCoroutines extends AsyncSuspendable {
     private int numCoroutines;
     private CountDownLatch latch;
 
@@ -16,7 +16,7 @@ public class MillionCoroutines extends CoroutineSuspendable {
     }
 
     @Override
-    public void run(CoroutineScope scope) {
+    public void run(AsyncScope scope) {
         long start = System.currentTimeMillis();
 
         System.out.println("Hello");
@@ -26,9 +26,9 @@ public class MillionCoroutines extends CoroutineSuspendable {
         AtomicInteger atomicInteger = new AtomicInteger(0);
 
         for (int i = 0; i < numCoroutines; i++) {
-            scope.launch(new CoroutineSuspendable() {
+            scope.launch(new AsyncSuspendable() {
                 @Override
-                public void run(CoroutineScope scope) {
+                public void run(AsyncScope scope) {
                     scope.delay(500);
                     atomicInteger.incrementAndGet();
                     latch.countDown();

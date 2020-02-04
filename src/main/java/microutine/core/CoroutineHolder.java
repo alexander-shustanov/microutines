@@ -1,10 +1,10 @@
 package microutine.core;
 
 @SuppressWarnings("rawtypes")
-class ContinuationHolder {
+class CoroutineHolder {
     private static final ThreadLocal<Continuation> continuations = new ThreadLocal<>();
 
-    static Continuation getCurrent() {
+    static Continuation getContinuation() {
         return continuations.get();
     }
 

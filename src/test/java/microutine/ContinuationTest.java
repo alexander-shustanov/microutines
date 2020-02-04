@@ -10,11 +10,11 @@ public class ContinuationTest {
     public void testNoException() {
         Suspendable suspendable = new Suspendable() {
             @Override
-            public void run(Scope scope) {
+            public void run(CoroutineScope scope) {
             }
         };
 
-        Continuation continuation = Magic.createContinuation(suspendable, new Scope() {
+        Continuation continuation = Magic.createContinuation(suspendable, new CoroutineScope() {
         });
 
         continuation.run(null);
@@ -24,11 +24,11 @@ public class ContinuationTest {
     public void testEndException() {
         Suspendable suspendable = new Suspendable() {
             @Override
-            public void run(Scope scope) {
+            public void run(CoroutineScope scope) {
             }
         };
 
-        Continuation continuation = Magic.createContinuation(suspendable, new Scope() {
+        Continuation continuation = Magic.createContinuation(suspendable, new CoroutineScope() {
         });
 
         continuation.run(null);

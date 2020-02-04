@@ -1,47 +1,47 @@
 package microutine;
 
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.CoroutineScope;
-import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.AsyncScope;
+import microutine.coroutine.AsyncSuspendable;
 import microutine.coroutine.Deferred;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static microutine.coroutine.CoroutineScope.runBlocking;
+import static microutine.coroutine.AsyncScope.runBlocking;
 
 public class AwaitTest {
     @Test
     public void testAwait() {
-        int result = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = runBlocking(new SuspendableWithResult<AsyncScope, Integer>() {
             @Override
-            public Integer run(CoroutineScope scope) {
-                Deferred<Integer> first = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+            public Integer run(AsyncScope scope) {
+                Deferred<Integer> first = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         scope.delay(1000);
                         return 100;
                     }
                 });
 
-                Deferred<Integer> second = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                Deferred<Integer> second = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         scope.delay(500);
                         return 200;
                     }
                 });
 
-                Deferred<Integer> third = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                Deferred<Integer> third = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         scope.delay(500);
                         return 400;
                     }
                 });
 
-                Deferred<Integer> forth = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                Deferred<Integer> forth = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         scope.delay(500);
                         return 400;
                     }
@@ -57,17 +57,17 @@ public class AwaitTest {
 
     @Test
     public void testNestedAwait() {
-        int result = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int result = runBlocking(new SuspendableWithResult<AsyncScope, Integer>() {
             @Override
-            public Integer run(CoroutineScope scope) {
-                Deferred<Integer> async = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+            public Integer run(AsyncScope scope) {
+                Deferred<Integer> async = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         scope.delay(100);
 
-                        return scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+                        return scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                             @Override
-                            public Integer run(CoroutineScope scope) {
+                            public Integer run(AsyncScope scope) {
                                 scope.delay(100);
                                 return 200;
                             }
@@ -83,12 +83,12 @@ public class AwaitTest {
 
     @Test
     public void singleInstruction() {
-        int integer = runBlocking(new SuspendableWithResult<CoroutineScope, Integer>() {
+        int integer = runBlocking(new SuspendableWithResult<AsyncScope, Integer>() {
             @Override
-            public Integer run(CoroutineScope scope) {
-                return scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+            public Integer run(AsyncScope scope) {
+                return scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
                     @Override
-                    public Integer run(CoroutineScope scope) {
+                    public Integer run(AsyncScope scope) {
                         return 100;
                     }
                 }).await();
@@ -100,20 +100,20 @@ public class AwaitTest {
 
     @Test
     public void orderTest() {
-        runBlocking(new CoroutineSuspendable() {
+        runBlocking(new AsyncSuspendable() {
             @Override
-            public void run(CoroutineScope scope) {
-                Deferred<String> customer = scope.async(new SuspendableWithResult<CoroutineScope, String>() {
+            public void run(AsyncScope scope) {
+                Deferred<String> customer = scope.async(new SuspendableWithResult<AsyncScope, String>() {
                     @Override
-                    public String run(CoroutineScope scope) {
+                    public String run(AsyncScope scope) {
                         scope.delay(1000);
                         return "Alex";
                     }
                 });
 
-                Deferred<String> product = scope.async(new SuspendableWithResult<CoroutineScope, String>() {
+                Deferred<String> product = scope.async(new SuspendableWithResult<AsyncScope, String>() {
                     @Override
-                    public String run(CoroutineScope scope) {
+                    public String run(AsyncScope scope) {
                         scope.delay(1000);
                         return "Bread";
                     }

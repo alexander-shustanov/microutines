@@ -9,11 +9,8 @@ import java.util.function.Consumer;
 import static microutine.core.CoroutineContext.getCurrent;
 
 @SuppressWarnings("rawtypes")
-public class CoroutineScopeImpl implements CoroutineScope {
-
-
-
-    public CoroutineScopeImpl() {
+public class AsyncScopeImpl implements AsyncScope {
+    public AsyncScopeImpl() {
     }
 
     @Override
@@ -23,7 +20,7 @@ public class CoroutineScopeImpl implements CoroutineScope {
     }
 
     @Override
-    public <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable) {
+    public <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<AsyncScope, R> suspendable) {
         Deferred<R> deferred = new Deferred<>();
         launch(context, suspendable, deferred::accept);
         return deferred;
@@ -35,24 +32,24 @@ public class CoroutineScopeImpl implements CoroutineScope {
         launch(getCurrent(), createLatchChecker(latch, context, Continuation.getCurrent()));
     }
 
-    private <R> void launch(CoroutineContext context, SuspendableWithResult<CoroutineScope, R> suspendable, Consumer<R> completion) {
-        CoroutineScopeImpl scope = new CoroutineScopeImpl();
+    private <R> void launch(CoroutineContext context, SuspendableWithResult<AsyncScope, R> suspendable, Consumer<R> completion) {
+        AsyncScopeImpl scope = new AsyncScopeImpl();
         Continuation<R> continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion<R> wrappedContinuation = new ContinuationWithCompletion<>(continuation, completion);
         context.getDispatcher().dispatch(context, wrappedContinuation);
     }
 
     @Override
-    public void launch(CoroutineContext context, CoroutineSuspendable suspendable) {
-        CoroutineScopeImpl scope = new CoroutineScopeImpl();
+    public void launch(CoroutineContext context, AsyncSuspendable suspendable) {
+        AsyncScopeImpl scope = new AsyncScopeImpl();
         Continuation continuation = Magic.createContinuation(suspendable, scope);
         context.getDispatcher().dispatch(context, continuation);
     }
 
-    private CoroutineSuspendable createLatchChecker(CountDownLatch latch, CoroutineContext context, Continuation continuation) {
-        return new CoroutineSuspendable() {
+    private AsyncSuspendable createLatchChecker(CountDownLatch latch, CoroutineContext context, Continuation continuation) {
+        return new AsyncSuspendable() {
             @Override
-            public void run(CoroutineScope scope) {
+            public void run(AsyncScope scope) {
                 if (latch.getCount() == 0) {
                     context.getDispatcher().dispatch(context, continuation);
                 } else {

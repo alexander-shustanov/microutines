@@ -1,17 +1,19 @@
 package test;
 
 import microutine.core.SuspendableWithResult;
-import microutine.coroutine.CoroutineScope;
-import microutine.coroutine.CoroutineSuspendable;
+import microutine.coroutine.AsyncScope;
+import microutine.coroutine.AsyncSuspendable;
 import microutine.coroutine.Deferred;
 
-public class AwaitTest extends CoroutineSuspendable {
-    @Override
-    public void run(CoroutineScope scope) {
+import java.util.concurrent.Future;
 
-        Deferred<Integer> deferred = scope.async(new SuspendableWithResult<CoroutineScope, Integer>() {
+public class AwaitTest extends AsyncSuspendable {
+    @Override
+    public void run(AsyncScope scope) {
+
+        Deferred<Integer> deferred = scope.async(new SuspendableWithResult<AsyncScope, Integer>() {
             @Override
-            public Integer run(CoroutineScope scope) {
+            public Integer run(AsyncScope scope) {
                 scope.delay(1000);
                 return 100;
             }
