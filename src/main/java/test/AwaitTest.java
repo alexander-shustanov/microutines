@@ -5,8 +5,6 @@ import microutine.coroutine.AsyncScope;
 import microutine.coroutine.AsyncSuspendable;
 import microutine.coroutine.Deferred;
 
-import java.util.concurrent.Future;
-
 public class AwaitTest extends AsyncSuspendable {
     @Override
     public void run(AsyncScope scope) {

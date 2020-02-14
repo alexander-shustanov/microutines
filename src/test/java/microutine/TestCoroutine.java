@@ -49,32 +49,29 @@ public class TestCoroutine {
 
     @Test
     public void millionDeferred() {
-        for (int i = 0; i < 10; i++) {
+        int million = 1_000_000;
 
-            int million = 1_000_000;
+        AsyncScope.runBlocking(new AsyncSuspendable() {
+            @Override
+            public void run(AsyncScope scope) {
+                long startTime = System.currentTimeMillis();
+                long sum = 0;
 
-            AsyncScope.runBlocking(new AsyncSuspendable() {
-                @Override
-                public void run(AsyncScope scope) {
-                    long startTime = System.currentTimeMillis();
-                    long sum = 0;
+                List<Deferred<Long>> deferredValues = new ArrayList<>();
 
-                    List<Deferred<Long>> deferredValues = new ArrayList<>();
-
-                    for (int i = 1; i <= million; i++) {
-                        deferredValues.add(scope.async(createIthAsync(i)));
-                    }
-
-                    for (Deferred<Long> deferredValue : deferredValues) {
-                        sum += deferredValue.await();
-                    }
-
-                    System.out.println(sum);
-
-                    System.out.println(System.currentTimeMillis() - startTime);
+                for (int i = 1; i <= million; i++) {
+                    deferredValues.add(scope.async(createIthAsync(i)));
                 }
-            });
-        }
+
+                for (Deferred<Long> deferredValue : deferredValues) {
+                    sum += deferredValue.await();
+                }
+
+                System.out.println(sum);
+
+                System.out.println(System.currentTimeMillis() - startTime);
+            }
+        });
     }
 
     private SuspendableWithResult<AsyncScope, Long> createIthAsync(int i) {

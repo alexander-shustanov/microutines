@@ -2,7 +2,9 @@ package microutine.core;
 
 import java.lang.reflect.Field;
 
-public interface Continuation<T> {
+public interface Continuation<T> extends CoroutineContext.ContextElement<Continuation<T>> {
+    CoroutineContext.ElementKey<? extends Continuation<?>> KEY = new CoroutineContext.ElementKey<>("Continuation");
+
     Object SUSPEND = new Object() {
         @Override
         public String toString() {
@@ -32,8 +34,14 @@ public interface Continuation<T> {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     static <T> Continuation<T> getCurrent() {
-        //noinspection unchecked
-        return CoroutineHolder.getContinuation();
+        return CoroutineContext.getCurrent().getElement((CoroutineContext.ElementKey<? extends Continuation>) KEY);
+    }
+
+    @SuppressWarnings({"unchecked"})
+    @Override
+    default CoroutineContext.ElementKey<? extends Continuation<T>> getKey() {
+        return (CoroutineContext.ElementKey<? extends Continuation<T>>) KEY;
     }
 }

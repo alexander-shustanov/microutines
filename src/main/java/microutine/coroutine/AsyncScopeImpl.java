@@ -36,14 +36,15 @@ public class AsyncScopeImpl implements AsyncScope {
         AsyncScopeImpl scope = new AsyncScopeImpl();
         Continuation<R> continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion<R> wrappedContinuation = new ContinuationWithCompletion<>(continuation, completion);
-        context.getDispatcher().dispatch(context, wrappedContinuation);
+
+        AsyncScope.startCoroutine(context, wrappedContinuation);
     }
 
     @Override
     public void launch(CoroutineContext context, AsyncSuspendable suspendable) {
         AsyncScopeImpl scope = new AsyncScopeImpl();
         Continuation continuation = Magic.createContinuation(suspendable, scope);
-        context.getDispatcher().dispatch(context, continuation);
+        AsyncScope.startCoroutine(context, continuation);
     }
 
     private AsyncSuspendable createLatchChecker(CountDownLatch latch, CoroutineContext context, Continuation continuation) {
@@ -51,7 +52,7 @@ public class AsyncScopeImpl implements AsyncScope {
             @Override
             public void run(AsyncScope scope) {
                 if (latch.getCount() == 0) {
-                    context.getDispatcher().dispatch(context, continuation);
+                    context.getElement(Dispatcher.KEY).dispatch(context, continuation);
                 } else {
                     launch(context, createLatchChecker(latch, context, continuation));
                 }

@@ -17,6 +17,68 @@ public interface AsyncScope extends CoroutineScope {
     @Suspend
     void delay(long millis);
 
+    @Suspend
+    default Object call(AsyncSuspendable suspendable) {
+        CoroutineContext oldContext = CoroutineContext.getCurrent();
+        Continuation callerContinuation = Continuation.getCurrent();
+
+        Continuation<Object> newContinuation = Magic.createContinuation(suspendable, this);
+        Continuation<Object> continuation = new Continuation<Object>() {
+            boolean wasSuspended = false;
+
+            @Override
+            public Object run(Object resumeWith) {
+                Object result = newContinuation.run(resumeWith);
+                if (result == Continuation.SUSPEND)
+                    wasSuspended = true;
+                else if (wasSuspended) {
+                    oldContext.getElement(Dispatcher.KEY).dispatch(oldContext, callerContinuation);
+                }
+
+                return result;
+            }
+        };
+
+        CoroutineContext newContext = oldContext.with(continuation);
+
+        newContext.set();
+        Object result = continuation.run(null);
+        oldContext.set();
+
+        return result;
+    }
+
+    @Suspend
+    default <R> R call(SuspendableWithResult<AsyncScope, R> suspendable) {
+        CoroutineContext oldContext = CoroutineContext.getCurrent();
+        Continuation callerContinuation = Continuation.getCurrent();
+
+        Continuation<R> newContinuation = Magic.createContinuation(suspendable, this);
+        Continuation<R> continuation = new Continuation<R>() {
+            boolean wasSuspended = false;
+
+            @Override
+            public R run(Object resumeWith) {
+                R result = newContinuation.run(resumeWith);
+                if (result == Continuation.SUSPEND)
+                    wasSuspended = true;
+                else if (wasSuspended) {
+                    oldContext.getElement(Dispatcher.KEY).dispatch(oldContext, callerContinuation);
+                }
+
+                return result;
+            }
+        };
+
+        CoroutineContext newContext = oldContext.with(continuation);
+
+        newContext.set();
+        R result = continuation.run(null);
+        oldContext.set();
+
+        return result;
+    }
+
     <R> Deferred<R> async(CoroutineContext context, SuspendableWithResult<AsyncScope, R> suspendable);
 
     default <R> Deferred<R> async(SuspendableWithResult<AsyncScope, R> suspendable) {
@@ -32,7 +94,8 @@ public interface AsyncScope extends CoroutineScope {
         AsyncScopeImpl scope = new AsyncScopeImpl();
         Continuation<Void> continuation = Magic.createContinuation(suspendable, scope);
         ContinuationWithCompletion<Void> wrappedContinuation = new ContinuationWithCompletion<>(continuation, o -> latch.countDown());
-        CoroutineContext.DEFAULT.getDispatcher().dispatch(CoroutineContext.DEFAULT, wrappedContinuation);
+
+        startCoroutine(CoroutineContext.DEFAULT, wrappedContinuation);
 
         try {
             latch.await();
@@ -41,18 +104,20 @@ public interface AsyncScope extends CoroutineScope {
         }
     }
 
+    @SuppressWarnings({"rawtypes"})
     static <R> R runBlocking(SuspendableWithResult<AsyncScope, R> suspendable) {
         AtomicReference<R> result = new AtomicReference<>();
 
         CountDownLatch latch = new CountDownLatch(1);
 
         AsyncScopeImpl scope = new AsyncScopeImpl();
-        Continuation continuation = Magic.createContinuation(suspendable, scope);
-        ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion<R>(continuation, r -> {
+        Continuation<R> continuation = Magic.createContinuation(suspendable, scope);
+        ContinuationWithCompletion wrappedContinuation = new ContinuationWithCompletion<>(continuation, r -> {
             result.set(r);
             latch.countDown();
         });
-        CoroutineContext.DEFAULT.getDispatcher().dispatch(CoroutineContext.DEFAULT, wrappedContinuation);
+
+        startCoroutine(CoroutineContext.DEFAULT, wrappedContinuation);
 
         try {
             latch.await();
@@ -61,5 +126,10 @@ public interface AsyncScope extends CoroutineScope {
         }
 
         return result.get();
+    }
+
+    static void startCoroutine(CoroutineContext context, Continuation<?> continuation) {
+        context = context.with(continuation);
+        context.getElement(Dispatcher.KEY).dispatch(context, continuation);
     }
 }

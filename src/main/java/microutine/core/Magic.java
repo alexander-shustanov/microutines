@@ -15,13 +15,13 @@ public class Magic {
 
     private static <C extends CoroutineScope, R> Continuation<R> getContinuation(Object suspendable, C scope) {
         try {
-            Field contextField = suspendable.getClass().getDeclaredField(SCOPE);
-            contextField.setAccessible(true);
+            Field scopeField = suspendable.getClass().getDeclaredField(SCOPE);
+            scopeField.setAccessible(true);
 
-            if (contextField.get(suspendable) != null)
+            if (scopeField.get(suspendable) != null)
                 throw new IllegalArgumentException("Continuation already created");
 
-            contextField.set(suspendable, scope);
+            scopeField.set(suspendable, scope);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

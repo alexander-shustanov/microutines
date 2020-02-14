@@ -2,6 +2,7 @@ package microutine.coroutine.delay;
 
 import microutine.core.Continuation;
 import microutine.core.CoroutineContext;
+import microutine.core.Dispatcher;
 
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -19,7 +20,7 @@ public class Delay {
         Thread myScheduleThread = new Thread(() -> {
             while (true) {
                 Event event = poll();
-                event.context.getDispatcher().dispatch(event.context, event.continuation);
+                event.context.getElement(Dispatcher.KEY).dispatch(event.context, event.continuation);
             }
         });
         myScheduleThread.setName("Delay");

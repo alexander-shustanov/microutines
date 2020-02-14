@@ -26,16 +26,16 @@ public class SimpleCoroutineTests {
 
     @Test
     public void globalScopeAwait() {
-        Deferred<String> result = GLOBAL_SCOPE.async(new SuspendableWithResult<AsyncScope, String>() {
-            @Override
-            public String run(AsyncScope scope) {
-                return "Hello World";
-            }
-        });
-
         runBlocking(new AsyncSuspendable() {
             @Override
             public void run(AsyncScope scope) {
+                Deferred<String> result = scope.async(new SuspendableWithResult<AsyncScope, String>() {
+                    @Override
+                    public String run(AsyncScope scope) {
+                        return "Alex";
+                    }
+                });
+
                 System.out.println(result.await());
             }
         });

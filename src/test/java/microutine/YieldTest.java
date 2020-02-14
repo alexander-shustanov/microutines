@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
@@ -140,7 +141,7 @@ public class YieldTest {
     }
 
     @Test
-    public void fibonacci() {
+    public void fibonacciSequence() {
         Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
             @Override
             public void run(SequenceScope<Integer> scope) {
@@ -165,5 +166,49 @@ public class YieldTest {
                 .skip(9).findFirst().get();
 
         assertEquals(55, ((int) tenthFibonacci));
+    }
+
+    @Test
+    public void fibonacciTime() {
+        Sequence<Integer> sequence = new Sequence<>(new SequenceSuspendable<Integer>() {
+            @Override
+            public void run(SequenceScope<Integer> scope) {
+                yield(1);
+                yield(1);
+
+                int a = 1;
+                int b = 1;
+
+                while (true) {
+                    b += a;
+                    yield(b);
+
+                    a += b;
+                    yield(a);
+                }
+            }
+        });
+
+        long start = System.currentTimeMillis();
+
+        //noinspection OptionalGetWithoutIsPresent
+        Integer result = StreamSupport.stream(sequence.spliterator(), false)
+                .skip(1000).findFirst().get();
+
+        System.out.println(result);
+
+        System.out.println(System.currentTimeMillis() - start);
+
+
+        start = System.currentTimeMillis();
+
+        result = Stream.iterate(new int[]{1, 1}, i -> new int[]{i[1], i[0] + i[1]})
+                .map(i -> i[0])
+        .skip(1000).findFirst().get();
+
+        System.out.println(result);
+
+        System.out.println(System.currentTimeMillis() - start);
+
     }
 }

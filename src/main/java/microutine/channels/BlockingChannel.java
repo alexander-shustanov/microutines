@@ -2,6 +2,7 @@ package microutine.channels;
 
 import microutine.core.Continuation;
 import microutine.core.CoroutineContext;
+import microutine.core.Dispatcher;
 import microutine.core.Suspend;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class BlockingChannel<T> {
 
         synchronized (this) {
             waiters.add(() -> {
-                context.getDispatcher().dispatch(context, continuation, value.get());
+                context.getElement(Dispatcher.KEY).dispatch(context, continuation, value.get());
             });
 
             if (value != null) {
@@ -43,20 +44,20 @@ public class BlockingChannel<T> {
                 value = new AtomicReference<>(t);
                 if (waiters.isEmpty()) {
                     waiters.add(() -> {
-                        context.getDispatcher().dispatch(context, continuation);
+                        context.getElement(Dispatcher.KEY).dispatch(context, continuation);
                     });
                 } else {
                     for (Runnable waiter : waiters) {
                         waiter.run();
                     }
                     waiters.clear();
-                    context.getDispatcher().dispatch(context, continuation);
+                    context.getElement(Dispatcher.KEY).dispatch(context, continuation);
                     value = null;
                 }
             } else {
                 waiters.add(() -> {
                     value = new AtomicReference<>(t);
-                    context.getDispatcher().dispatch(context, continuation);
+                    context.getElement(Dispatcher.KEY).dispatch(context, continuation);
                 });
             }
         }

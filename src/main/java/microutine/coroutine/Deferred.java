@@ -2,6 +2,7 @@ package microutine.coroutine;
 
 import microutine.core.Continuation;
 import microutine.core.CoroutineContext;
+import microutine.core.Dispatcher;
 import microutine.core.Suspend;
 
 import static microutine.core.CoroutineContext.getCurrent;
@@ -43,7 +44,7 @@ public class Deferred<T> {
             if (isDone()) {
                 return getValue();
             }
-            waiter = () -> myContext.getDispatcher().dispatch(myContext, myContinuation, getValue());
+            waiter = () -> myContext.getElement(Dispatcher.KEY).dispatch(myContext, myContinuation, getValue());
 
             return Continuation.getSuspend();
         }

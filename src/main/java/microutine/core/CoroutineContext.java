@@ -2,28 +2,34 @@ package microutine.core;
 
 import microutine.coroutine.Dispatchers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CoroutineContext {
     private static final ThreadLocal<CoroutineContext> contexts = new ThreadLocal<>();
 
-    public static final CoroutineContext DEFAULT = new CoroutineContext(Dispatchers.DEFAULT) {
+    public static final CoroutineContext DEFAULT = new CoroutineContext() {
         @Override
-        void set() {
+        public void set() {
             contexts.remove();
         }
-    };
+    }.with(Dispatchers.DEFAULT);
 
-    protected final Dispatcher dispatcher;
+    private Map<ElementKey<?>, ContextElement<?>> elements = new HashMap<>();
 
-    public CoroutineContext(Dispatcher dispatcher) {
-        this.dispatcher = dispatcher;
+    public CoroutineContext() {
     }
 
-    void set() {
-        contexts.set(this);
+    public <E extends ContextElement<E>> E getElement(ElementKey<E> key) {
+        //noinspection unchecked
+        return (E) elements.get(key);
     }
 
-    public Dispatcher getDispatcher() {
-        return dispatcher;
+    public <E extends ContextElement<E>> CoroutineContext with(E element) {
+        CoroutineContext created = new CoroutineContext();
+        created.elements.putAll(elements);
+        created.elements.put(element.getKey(), element);
+        return created;
     }
 
     public static CoroutineContext getCurrent() {
@@ -32,4 +38,21 @@ public class CoroutineContext {
             return DEFAULT;
         return context;
     }
+
+    public void set() {
+        contexts.set(this);
+    }
+
+    public static class ElementKey<E extends ContextElement<? extends E>> {
+        public final String name;
+
+        public ElementKey(String name) {
+            this.name = name;
+        }
+    }
+
+    public interface ContextElement<E extends ContextElement<E>> {
+        CoroutineContext.ElementKey<? extends E> getKey();
+    }
+
 }
